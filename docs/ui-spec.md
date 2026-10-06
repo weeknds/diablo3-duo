@@ -5,14 +5,20 @@ This manifest is a static status page for the first Eden Duo engine-load test. I
 ## Accepted product direction — 2026-10-06
 
 The owner selected **build and character details** as the lower display's primary
-purpose: reduce trips into Inventory while playing. The intended live layout has
-a compact level, health and class-resource strip, with most space reserved for
-equipped skills/runes and useful character statistics. Damage, toughness,
-recovery and selected bonuses are investigation priorities, not shipped fields.
+purpose: reduce trips into Inventory while playing. The intended live layout
+prioritises equipped skills, selected runes, passives and useful character
+statistics. Critical chance, cooldown reduction, resistances and other selected
+bonuses are investigation priorities, not shipped fields.
+
+The owner explicitly rejected a health display because the upper screen already
+shows the health bar. Do not reserve permanent lower-screen space for duplicated
+HUD bars. Health is an internal test value for validating the attribute reader,
+not a planned default feature. Apply the same test of usefulness before adding
+any status readout: it should reduce a menu visit or supply useful missing detail.
 
 Only independently verified fields will enter the live interface. Character
-level is the first private milestone; health, resource, skills and statistics
-are still being investigated. The final supported subset depends on reliable
+level is the first private milestone; skills, passives and statistics remain
+unverified. The final supported subset depends on reliable
 read-only access and comparison with the game's menus. XP, maps and equipment
 interaction are deferred. No equipment-changing controls are planned for the
 first read-only release.
