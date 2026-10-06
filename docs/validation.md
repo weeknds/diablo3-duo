@@ -27,8 +27,10 @@ Development archive SHA-256:
 feb78f3399c83c71dc770480906e5792e26d3596892f663ae7240625ab05218d
 ```
 
-The initial handoff also recorded 11 passing tests on Linux x86-64. That is
-historical evidence, not a Linux integration or current CI result.
+GitHub CI passed on Ubuntu with Python 3.10 and 3.14, and macOS with Python 3.14
+at commit `c96a0575e177c1cc54062a3705e1360aec18cd88`
+([run](https://github.com/weeknds/diablo3-duo/actions/runs/37498853820)).
+This validates tooling and static packaging, not game integration.
 
 ## Device and integration status
 
@@ -54,10 +56,21 @@ historical evidence, not a Linux integration or current CI result.
   readouts while the game was at its title screen. The
   [original lower-screen screenshot](images/development-preview-thor.png)
   records the observed layout without game artwork or personal identifiers.
-- Gameplay input routing with the companion active, loading transitions and
-  repeat-launch behavior remain unverified.
-- Live values, pointers, build compatibility and inventory interactions remain
-  unavailable. No live-functionality check is complete.
+- A separate private research module displayed candidate character level **1**,
+  matching the game's Inventory menu for the test Barbarian through two fresh
+  game launches. Startup, quitting gameplay and the returned main menu showed
+  **UNAVAILABLE**. Captures and the tested artifact hashes are retained privately.
+  The owner then played the Barbarian to level 2 using the Thor's physical
+  controls; both Inventory and the companion showed 2. A fresh normal,
+  non-seasonal Wizard subsequently matched at level 1. Hero selection also
+  showed unavailable. These observations establish the first level milestone,
+  with further lifecycle and field validation still required before release.
+- A five-second screen-off paused Eden and left the lower display black. After
+  wake and the app's Resume action, the Wizard's level 1 matched again. A tap and
+  swipe directed to the lower display left the game's Inventory state unchanged.
+  These are bounded observations, not complete input or long-sleep coverage.
+- No live reader is included in the public package. Health, resource, skills and
+  inventory interactions remain unavailable.
 - Performance is unmeasured. A frame-rate counter in a gameplay screenshot is
   not a benchmark or an overhead measurement.
 - Android NDK r28c is installed and verified under the ignored project-private
@@ -74,5 +87,6 @@ in the reviewed code/CI, and separately exercised flush/fsync/close failure path
 The production package remains static, with no supported builds and both
 `live_data_available` and `verified_on_thor` set to `false`. The latter is not
 promoted by a successful installation or screenshot. The first live milestone
-still requires one correct game value through two fresh launches and a different
-copied character/save, checked against the game's own menu.
+has the two-launch, controlled level change and second-character evidence.
+Death, travel, long-sleep behavior and measured performance remain unverified. No
+claim is made for other levels, classes, modes or game builds.

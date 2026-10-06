@@ -14,6 +14,7 @@ and captured lower-screen layout were verified on a Thor on 2026-10-06.
 | Supported builds | None |
 | Gameplay observed | Fresh non-seasonal Barbarian in a separate test profile; owner confirmation and device capture |
 | Verified companion field/class/mode coverage | None |
+| Private research observation | Level matched Inventory across two fresh launches, Barbarian level 1 to 2, and a fresh level-1 Wizard; startup/main-menu/hero-selection states unavailable |
 | Health, resource, progression, skills, inventory, map | Unavailable |
 | Package runtime declaration | Minimum runtime 18 |
 | Installed Eden Duo / runtime version | Eden Duo 1.1.0 observed; runtime 18 confirmed in upstream source |

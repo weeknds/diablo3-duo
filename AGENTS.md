@@ -2,7 +2,7 @@
 
 ## Objective and present evidence
 
-Develop a Diablo III companion for Eden Duo on AYN Thor. The first accepted live milestone is one correct game value on the lower screen through two fresh launches and a different copied character/save, checked against the game's own menu. The production package remains a static status page. On 2026-10-06, the installed update and effective executable were identified, unmodified gameplay was observed on a fresh test profile, and the static preview installed and rendered on the Thor. Live values, lifecycle correctness and measured performance remain unverified. See docs/next-step.md for current evidence and dependencies.
+Develop a Diablo III companion for Eden Duo on AYN Thor. The first live milestone is one correct game value on the lower screen through two fresh launches and a different copied character/save, checked against the game's own menu. Private research on 2026-10-06 matched character level across two launches, a Barbarian level-up from 1 to 2 and a fresh level-1 Wizard. Startup and main-menu states cleared the value. The production package remains a static status page. Further fields, complete lifecycle coverage and measured performance are still required before a working release. See docs/next-step.md for current evidence and dependencies.
 
 Read `README.md`, `project.json`, `vendor/UPSTREAM.json`, and `docs/next-step.md` before continuing. Refer to the pinned package format for syntax and the current upstream C++ parser when behavior is uncertain.
 

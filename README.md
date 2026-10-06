@@ -4,7 +4,7 @@ An early companion project for **Diablo III: Eternal Collection (Switch)** on th
 
 **Current version: 0.1.0-dev — development UI only.**
 
-The package displays a clearly labelled status page on the lower screen. It has no live game values, memory reads, writes, game patches, inventory actions, or game assets. **The static preview was installed and rendered on an AYN Thor on 2026-10-06. No live reader or supported game build has been verified.** This hardware observation establishes package loading and the captured layout only.
+The package displays a clearly labelled status page on the lower screen. It has no live game values, memory reads, writes, game patches, inventory actions, or game assets. **The static preview was installed and rendered on an AYN Thor on 2026-10-06. No live reader is included in the public package and no supported game build is declared.** The static preview observation establishes package loading and the captured layout only.
 
 ## Included
 
@@ -14,9 +14,16 @@ The package displays a clearly labelled status page on the lower screen. It has 
 - Tests for packaging, unverified-support guards, metadata parsing, and non-destructive input handling.
 - CI, installation and compatibility guides, and a device-validation protocol.
 
-The target title ID is `01001B300B9BE000`. Eden Duo Info confirms it. Update `2.7.7.92380` and its executable build have now been identified; no live reader has been verified. No region mapping or supported update version is claimed.
+The target title ID is `01001B300B9BE000`. Eden Duo Info confirms it. Update `2.7.7.92380` and its executable build have been identified for research. No region mapping or supported update version is claimed.
 
 Start with [START_HERE.txt](START_HERE.txt). See [installation, update and removal](docs/installation.md), [compatibility](docs/compatibility.md), and [current validation](docs/validation.md). There is no working live-data release. Any CI artifact is a static development preview.
+
+Private research has matched character level with the game's Inventory menu
+through two fresh launches, a Barbarian level-up from 1 to 2, and a fresh level-1
+Wizard. Startup and return to the main menu clear the value. This establishes
+the first level milestone on the observed setup. Further fields, lifecycle
+checks and measured overhead remain pending; the research reader is not included
+in the public package.
 
 ![Original lower-screen capture of the static development preview on AYN Thor](docs/images/development-preview-thor.png)
 
@@ -82,7 +89,7 @@ These are tooling tests with synthetic fixtures. They do not test Diablo III or 
 
 ## Next milestone
 
-Show one independently verified live value, such as character level or health, on the lower screen through two fresh game launches and a different copied character/save. Then expand to a useful verified set of health, resource, progression or skill fields. Inventory interaction remains a separate later milestone. See [the continuation guide](docs/next-step.md) and [upstream investigation](docs/upstream-research.md).
+Expand the private character-level milestone to a useful verified set of health, resource, progression or skill fields, then complete lifecycle and performance validation before a working release. Inventory interaction remains a separate later milestone. See [the continuation guide](docs/next-step.md) and [upstream investigation](docs/upstream-research.md).
 
 The documented live research path uses Linux. Current upstream native modules
 cannot load on macOS, and Android NCE does not provide the documented desktop

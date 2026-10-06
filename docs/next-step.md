@@ -31,7 +31,13 @@
 - NDK r28c is installed and verified in the project-private toolchain directory.
   A separate private diagnostic module passed review and sanitizer tests, loaded
   on the Thor, and completed one bounded four-byte read. This confirms the
-  host API only. A character-level candidate is under private investigation.
+  host API only. A subsequent private level probe displayed candidate level 1
+  matching the Barbarian's Inventory menu through two fresh game launches.
+  It showed unavailable at startup and after quitting to the main menu.
+  A physical-control play session changed the Barbarian from level 1 to 2;
+  Inventory and the probe both showed 2. A fresh non-seasonal Wizard matched
+  at level 1. The first level milestone is observed; further fields,
+  lifecycle/input checks and performance measurement remain pending.
 
 ## Immediate continuation
 
@@ -40,13 +46,15 @@
    and the private save backup. Leave `dump_exefs` disabled.
 2. Record gameplay and controller/touch routing with the static companion active.
    Keep that result separate from the already observed title-screen rendering.
-3. Continue the private player-level probe after independent review. Its offsets
-   have evidence from the exact executable, but field correctness and lifecycle
-   behavior still require hardware checks. Keep research outside production.
+3. Review the private level milestone evidence and continue the separate health
+   probe. Its exact-build pointer and attribute-cache research is private;
+   health values still need hardware comparison. Keep research outside production
+   until the required evidence has been reviewed.
 4. Correlate a useful field with normal gameplay changes, derive a reproducible
    pointer route and validate type, bounds, ownership, relocation and lifetime.
-   Check the value against the game's own menu through two fresh launches,
-   another copied character/save and loading transitions.
+   Apply the level milestone's menu comparison and repeat-launch/character
+   checks to each added field, then exercise further loading, death, travel
+   and suspend/resume transitions.
 5. Measure performance and companion overhead on the Thor before claiming live
    support. Update compatibility and production flags only after the required
    evidence has been reviewed.
@@ -72,7 +80,9 @@ See [upstream research](upstream-research.md) and [device protocol](device-valid
 
 English documentation, CI, the original lower-screen screenshot and the exact
 `public-files.txt` source allowlist have passed prepublication review. The owner
-has authorized publication of truthful development source on `main`.
+has authorized publication of truthful development source on `main`, now available
+at [weeknds/diablo3-duo](https://github.com/weeknds/diablo3-duo). Tooling CI passed
+on Python 3.10/3.14 after correcting a test-only failure-injection portability issue.
 Never stage `private/` or `.serena/`. A working release remains gated on useful
 verified live values, lifecycle/input testing, measured overhead and matching
 compatibility records.
