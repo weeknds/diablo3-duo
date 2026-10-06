@@ -88,5 +88,43 @@ The production package remains static, with no supported builds and both
 `live_data_available` and `verified_on_thor` set to `false`. The latter is not
 promoted by a successful installation or screenshot. The first live milestone
 has the two-launch, controlled level change and second-character evidence.
-Death, travel, long-sleep behavior and measured performance remain unverified. No
-claim is made for other levels, classes, modes or game builds.
+Death, travel and measured performance remain unverified. No claim is made for
+other levels, classes, modes or game builds.
+
+## Later private build-details checkpoint
+
+Private research `0.0.8-research` installed and rendered its combined interface
+on the same Thor setup. Its font, long skill label and observed unavailable
+states fit without clipping in retained captures. This is screenshot-level
+visual evidence, not an owner assessment of long-term reading comfort.
+
+- Wizard level 1, Magic Missile with no rune, attack speed 1.20 and armor 16
+  matched the menus; values repeated after a fresh guest restart.
+- Changing to Barbarian level 2 showed Bash and Hammer of the Ancients with no
+  runes, attack speed 1.20 and armor 31. Skill names were independently correlated
+  in an earlier probe by clearing and restoring each slot through normal game
+  controls. Unknown skill and rune names remain unavailable.
+- The unchanged stat-reader core was tested by removing/restoring the Barbarian's
+  weapon (attack speed 1.20 → 1.00 → 1.20) and shield (armor 31 → 22 → 31).
+  All three states matched Character Details. Equipment was restored afterward.
+- Movement bonus matched at +0% on both characters; no nonzero change was tested.
+  Cooldown reduction stayed unavailable because the cache key was absent; the
+  current reader does not infer a numeric default.
+- Startup and normal quit cleared every field. After approximately 90 seconds
+  asleep, Eden remained paused with the lower display black; its Resume action
+  restored the Wizard values. This is a bounded suspend test, not overnight or
+  process-death coverage.
+- A tap and swipe directed to the lower display left the upper Skills selection
+  and assignment unchanged. Full physical-controller coverage is still pending.
+
+Synthetic sanitizer tests and independent review covered exact build/ABI gates,
+stale-state clearing, bounded cache reads, field-specific failures, shared
+identity changes and the font interface. An independent Android rebuild matched
+the candidate binary. The maximum per sample is 198 reads and 2,054 requested
+bytes; this is a work bound, not a measured performance result.
+
+The combined prototype and its private evidence remain outside the public
+package. Three early skill names and no populated runes are not broad skill
+support. Death, travel, measured overhead and further useful-field coverage
+remain release work. Production metadata continues to declare no supported
+builds and no live reader.

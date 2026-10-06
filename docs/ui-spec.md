@@ -16,9 +16,10 @@ HUD bars. Health is an internal test value for validating the attribute reader,
 not a planned default feature. Apply the same test of usefulness before adding
 any status readout: it should reduce a menu visit or supply useful missing detail.
 
-Only independently verified fields will enter the live interface. Character
-level is the first private milestone; skills, passives and statistics remain
-unverified. The final supported subset depends on reliable
+Only independently verified fields will enter the live interface. Private
+research now has narrow menu-comparison evidence for level, three skill names,
+attack speed and armor, plus movement at +0%. Selected rune names, passives and
+broader statistic coverage remain unverified. The final supported subset depends on reliable
 read-only access and comparison with the game's menus. XP, maps and equipment
 interaction are deferred. No equipment-changing controls are planned for the
 first read-only release.

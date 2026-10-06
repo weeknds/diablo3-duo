@@ -18,12 +18,17 @@ The target title ID is `01001B300B9BE000`. Eden Duo Info confirms it. Update `2.
 
 Start with [START_HERE.txt](START_HERE.txt). See [installation, update and removal](docs/installation.md), [compatibility](docs/compatibility.md), and [current validation](docs/validation.md). There is no working live-data release. Any CI artifact is a static development preview.
 
-Private research has matched character level with the game's Inventory menu
-through two fresh launches, a Barbarian level-up from 1 to 2, and a fresh level-1
-Wizard. Startup and return to the main menu clear the value. This establishes
-the first level milestone on the observed setup. Further fields, lifecycle
-checks and measured overhead remain pending; the research reader is not included
-in the public package.
+Private research has matched character level, three equipped skill names,
+attacks per second and armor with the game's menus on early-level Barbarian
+and Wizard test characters. Weapon and shield changes produced matching stat
+changes. A combined build-details prototype rendered on the Thor, repeated the
+Wizard's values through two fresh launches, and recovered after an approximately
+90-second suspend. Movement bonus has only been checked at +0%; cooldown
+reduction remains unavailable when its cached value is absent.
+
+These are narrow research observations. Broader skill and rune coverage, death,
+travel and measured overhead remain pending. The research reader is not included
+in the public package; see [current validation](docs/validation.md).
 
 ![Original lower-screen capture of the static development preview on AYN Thor](docs/images/development-preview-thor.png)
 

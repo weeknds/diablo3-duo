@@ -41,12 +41,39 @@
   milestone is observed; further fields, full lifecycle/input checks and
   performance measurement remain pending.
 
+## Private build-details checkpoint
+
+Private `0.0.8-research` combines the reviewed read-only level, selected-skill
+and character-stat readers with an original layout and an OFL-derived font.
+It installed and rendered on the Thor. Wizard level 1 repeated through two fresh
+guest launches; changing to Barbarian level 2 produced the correct distinct
+skills and armor. Startup and normal quit cleared all values. An approximately
+90-second screen-off paused Eden and left the lower display black; Resume
+restored the expected Wizard details. A lower-display tap and swipe left the
+game's Skills selection unchanged. These observations do not establish complete
+lifecycle, controller or performance coverage.
+
+The frozen earlier probes established three factual names by comparing the
+Skills menu and independently clearing/reassigning each slot: Magic Missile,
+Bash and Hammer of the Ancients. Only the no-rune state was verified. Attacks
+per second changed 1.20 → 1.00 → 1.20 when removing/restoring the Barbarian's
+weapon; armor changed 31 → 22 → 31 with its shield. Both changes matched Character
+Details. Wizard armor 16 and attack speed 1.20 matched too. Movement was checked
+only at +0%; cooldown reduction has no available cached value in these tests.
+
+Exact artifact hashes, screenshots, review receipts and limits are retained in
+`private/reports/skills-probe-device-20261006.json`,
+`private/reports/character-stats-device-20261006.json` and
+`private/reports/build-details-device-20261006.json`.
+These private artifacts are not a working release. No production support flags
+or package contents have changed.
+
 ## Immediate continuation
 
 1. Check `private/device/session-state.json` for current device ownership and
    research state before interacting. Preserve owner settings, the test profile
    and the private save backup. Leave `dump_exefs` disabled.
-2. Review the retained private level and attribute-reader evidence. Complete
+2. Review the retained private combined-reader and menu-comparison evidence. Complete
    gameplay and controller/touch coverage with the final live candidate; the
    static preview's title-screen rendering is separate evidence.
 3. Follow the accepted [build and character details direction](ui-spec.md).
@@ -54,11 +81,12 @@
    statistics. Health is an internal attribute-reader test and must not become
    a default readout merely because it is easy to validate. Keep the private
    research outside production until each field's evidence has been reviewed.
-4. Correlate a useful field with normal gameplay changes, derive a reproducible
-   pointer route and validate type, bounds, ownership, relocation and lifetime.
-   Apply the level milestone's menu comparison and repeat-launch/character
-   checks to each added field, then exercise further loading, death, travel
-   and suspend/resume transitions.
+4. Expand skill names and selected runes using a bounded, reviewed lookup rather
+   than assuming the three observed names cover other builds. Private research
+   is investigating the game's existing name tables and exact native handling
+   of missing cached stats. Every new path needs synthetic failure coverage,
+   independent review and fresh device comparisons. Then complete death, travel
+   and further gameplay/lifecycle checks with the final candidate.
 5. Measure performance and companion overhead on the Thor before claiming live
    support. Update compatibility and production flags only after the required
    evidence has been reviewed.
