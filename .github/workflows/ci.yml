@@ -1,0 +1,72 @@
+name: Tooling and development package
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            python: '3.10'
+          - os: ubuntu-latest
+            python: '3.14'
+          - os: macos-latest
+            python: '3.14'
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
+        with:
+          python-version: ${{ matrix.python }}
+      - name: Run synthetic tooling tests
+        run: python3 -m unittest discover -s tests -v
+      - name: Check explicit public source inventory
+        run: |
+          python3 - <<'PY'
+          import subprocess
+          from pathlib import Path
+          expected = Path('public-files.txt').read_text().splitlines()
+          actual = subprocess.check_output(['git', 'ls-files', '-z']).decode().rstrip('\0').split('\0')
+          assert len(expected) == len(set(expected)), 'Duplicate public inventory entry'
+          assert set(actual) == set(expected), 'Review changes to the public source inventory'
+          for name in actual:
+              path = Path(name)
+              assert path.is_file() and not path.is_symlink(), name
+              assert path.stat().st_size < 1_000_000, name
+          PY
+      - name: Validate development-only status
+        run: python3 tools/build.py --check
+      - name: Build package
+        run: python3 tools/build.py
+      - name: Check vendored provenance
+        run: |
+          python3 - <<'PY'
+          import hashlib, json
+          from pathlib import Path
+          pin = json.loads(Path('vendor/UPSTREAM.json').read_text())
+          for name, record in pin['files'].items():
+              assert hashlib.sha256(Path(name).read_bytes()).hexdigest() == record['sha256'], name
+          PY
+      - name: Write preview checksum
+        if: matrix.os == 'ubuntu-latest' && matrix.python == '3.10'
+        working-directory: dist
+        run: sha256sum 01001B300B9BE000.dsmod.zip > SHA256SUMS
+      - name: Retain unverified development preview
+        if: matrix.os == 'ubuntu-latest' && matrix.python == '3.10'
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: development-ui-preview-${{ github.sha }}
+          if-no-files-found: error
+          path: |
+            dist/01001B300B9BE000.dsmod.zip
+            dist/SHA256SUMS

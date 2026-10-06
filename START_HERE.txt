@@ -1,0 +1,31 @@
+Diablo III Duo — development preview
+
+This project currently builds a static lower-screen status page for Eden Duo.
+It does not read health, character level, resources, skills, or inventory.
+The static preview was installed and rendered on an AYN Thor on 2026-10-06.
+No live-data reader or supported game build has been verified.
+
+The observed setup is Android 13, Eden Duo 1.1.0 and game update 2.7.7.92380.
+The updated executable has been identified. A fresh non-seasonal Barbarian
+reached gameplay in a separate test profile. Static companion rendering was
+verified at the title screen; gameplay input routing with it remains unverified.
+The original lower-screen capture is docs/images/development-preview-thor.png.
+
+Start with README.md. Device setup and package installation are described in
+docs/installation.md. Current compatibility is in docs/compatibility.md.
+
+For development, Python 3.10 or newer is sufficient for the included tools:
+
+  python3 -m unittest discover -s tests -v
+  python3 tools/build.py --check
+  python3 tools/build.py
+
+Game files stay on your computer under the ignored private/ directory.
+Do not upload game archives, keys, firmware, saves, or memory dumps to GitHub.
+Read docs/next-step.md before starting live integration. The immediate target
+is one correct live value across fresh launches and character changes.
+
+A working release still requires useful live data verified on the Thor across
+two fresh launches and a different copied character/save, correct unavailable
+states, gameplay input checks and measured performance. Static rendering and
+a successful archive build do not establish those results.

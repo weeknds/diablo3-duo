@@ -1,0 +1,20 @@
+name: Bug report
+description: Report a tooling or companion problem with reproducible steps.
+body:
+  - type: markdown
+    attributes:
+      value: "The current preview has no live game data. Do not attach game files, keys, firmware, saves, memory dumps, device serials, or personal paths."
+  - type: textarea
+    id: environment
+    attributes:
+      label: Versions and environment
+      description: Package version, Eden Duo/runtime, game update, device and Android version; or OS and Python version for tooling.
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Steps, expected result, and actual result
+      description: Distinguish game launch, companion loading, and tooling errors. Include redacted error text if useful.
+    validations:
+      required: true

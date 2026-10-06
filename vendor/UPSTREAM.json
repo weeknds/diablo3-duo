@@ -1,0 +1,19 @@
+{
+  "repository": "https://github.com/igawa6/eden-duo-companions",
+  "commit": "015d083e8859c86480360f44b65c4104bbf3c839",
+  "retrieved": "2026-10-06",
+  "files": {
+    "vendor/build_dualscreen_package.py": {
+      "source": "tools/build_dualscreen_package.py",
+      "sha256": "b4de0e91a012090fcba201eb78083c9854f26a4a4a703fdb333ec695cfcf9438"
+    },
+    "LICENSE": {
+      "source": "LICENSE",
+      "sha256": "3972dc9744f6499f0f9b2dbf76696f2ae7ad8af9b23dde66d6af86c9dfb36986"
+    },
+    "vendor/PACKAGE_FORMAT.md": {
+      "source": "docs/PACKAGE_FORMAT.md",
+      "sha256": "3df74ef00cf883b6217dbc0a57b16b1dee787d9e424be85daf8f80a77f8031a2"
+    }
+  }
+}

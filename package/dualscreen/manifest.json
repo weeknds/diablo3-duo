@@ -1,0 +1,288 @@
+{
+  "format": 1,
+  "name": "Diablo III Duo - Development Preview",
+  "title_id": "01001B300B9BE000",
+  "min_runtime": 18,
+  "canvas_w": 1240,
+  "canvas_h": 1080,
+  "background": "#FF11100F",
+  "nav": false,
+  "pages": [
+    {
+      "id": "development",
+      "title": "Development preview",
+      "widgets": [
+        {
+          "type": "rect",
+          "rect": [
+            72,
+            66,
+            64,
+            6
+          ],
+          "bg": "#FFAA6F6B",
+          "color": 0,
+          "frame": 0
+        },
+        {
+          "type": "label",
+          "rect": [
+            72,
+            104,
+            0,
+            0
+          ],
+          "text": "DIABLO III DUO",
+          "text_scale": 6,
+          "color": "#FFF1E9DC",
+          "wrap_width": 1096,
+          "max_lines": 1,
+          "fit_text": true,
+          "text_min_scale": 5
+        },
+        {
+          "type": "rect",
+          "rect": [
+            72,
+            194,
+            1096,
+            84
+          ],
+          "bg": "#FF2B1C1D",
+          "color": 0,
+          "frame": 0
+        },
+        {
+          "type": "rect",
+          "rect": [
+            72,
+            194,
+            6,
+            84
+          ],
+          "bg": "#FFAA6F6B",
+          "color": 0,
+          "frame": 0
+        },
+        {
+          "type": "label",
+          "rect": [
+            100,
+            194,
+            0,
+            0
+          ],
+          "text": "DEVELOPMENT PREVIEW",
+          "text_scale": 5,
+          "text_center_h": 84,
+          "color": "#FFE7B0AB",
+          "wrap_width": 1040,
+          "max_lines": 1,
+          "fit_text": true,
+          "text_min_scale": 4
+        },
+        {
+          "type": "label",
+          "rect": [
+            72,
+            334,
+            0,
+            0
+          ],
+          "text": "Live game data is not connected",
+          "text_scale": 5,
+          "color": "#FFF1E9DC",
+          "wrap_width": 1096,
+          "max_lines": 1,
+          "fit_text": true,
+          "text_min_scale": 4
+        },
+        {
+          "type": "label",
+          "rect": [
+            72,
+            398,
+            0,
+            0
+          ],
+          "text": "This screen is a static layout preview.",
+          "text_scale": 4,
+          "color": "#FFB9AEA0",
+          "wrap_width": 1096,
+          "max_lines": 1,
+          "fit_text": true,
+          "text_min_scale": 3
+        },
+        {
+          "type": "rect",
+          "rect": [
+            72,
+            484,
+            1096,
+            358
+          ],
+          "bg": "#FF191716",
+          "color": 0,
+          "frame": 0
+        },
+        {
+          "type": "label",
+          "rect": [
+            100,
+            512,
+            0,
+            0
+          ],
+          "text": "PLANNED READOUTS",
+          "text_scale": 3,
+          "color": "#FFB9AEA0",
+          "wrap_width": 1040,
+          "max_lines": 1,
+          "fit_text": true,
+          "text_min_scale": 3
+        },
+        {
+          "type": "label",
+          "rect": [
+            100,
+            574,
+            0,
+            0
+          ],
+          "text": "Health",
+          "text_scale": 4,
+          "color": "#FFDDD2C1",
+          "wrap_width": 880,
+          "max_lines": 1,
+          "fit_text": true,
+          "text_min_scale": 3
+        },
+        {
+          "type": "rect",
+          "rect": [
+            1088,
+            586,
+            48,
+            4
+          ],
+          "bg": "#FFB9AEA0",
+          "color": 0,
+          "frame": 0
+        },
+        {
+          "type": "rect",
+          "rect": [
+            100,
+            636,
+            1040,
+            1
+          ],
+          "bg": "#FF38312D",
+          "color": 0,
+          "frame": 0
+        },
+        {
+          "type": "label",
+          "rect": [
+            100,
+            666,
+            0,
+            0
+          ],
+          "text": "Class resource",
+          "text_scale": 4,
+          "color": "#FFDDD2C1",
+          "wrap_width": 880,
+          "max_lines": 1,
+          "fit_text": true,
+          "text_min_scale": 3
+        },
+        {
+          "type": "rect",
+          "rect": [
+            1088,
+            678,
+            48,
+            4
+          ],
+          "bg": "#FFB9AEA0",
+          "color": 0,
+          "frame": 0
+        },
+        {
+          "type": "rect",
+          "rect": [
+            100,
+            728,
+            1040,
+            1
+          ],
+          "bg": "#FF38312D",
+          "color": 0,
+          "frame": 0
+        },
+        {
+          "type": "label",
+          "rect": [
+            100,
+            758,
+            0,
+            0
+          ],
+          "text": "Equipped skills",
+          "text_scale": 4,
+          "color": "#FFDDD2C1",
+          "wrap_width": 880,
+          "max_lines": 1,
+          "fit_text": true,
+          "text_min_scale": 3
+        },
+        {
+          "type": "rect",
+          "rect": [
+            1088,
+            770,
+            48,
+            4
+          ],
+          "bg": "#FFB9AEA0",
+          "color": 0,
+          "frame": 0
+        },
+        {
+          "type": "label",
+          "rect": [
+            72,
+            906,
+            0,
+            0
+          ],
+          "text": "NEXT MILESTONE",
+          "text_scale": 3,
+          "color": "#FFB9AEA0",
+          "wrap_width": 1096,
+          "max_lines": 1,
+          "fit_text": true,
+          "text_min_scale": 3
+        },
+        {
+          "type": "label",
+          "rect": [
+            72,
+            952,
+            0,
+            0
+          ],
+          "text": "Verify the package on a real AYN Thor.",
+          "text_scale": 4,
+          "color": "#FFDDD2C1",
+          "wrap_width": 1096,
+          "max_lines": 1,
+          "fit_text": true,
+          "text_min_scale": 3
+        }
+      ]
+    }
+  ],
+  "requires_module": false
+}

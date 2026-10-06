@@ -1,0 +1,10 @@
+name: Feature request
+description: Describe information or an interaction that would help during play.
+body:
+  - type: textarea
+    id: need
+    attributes:
+      label: What would this help you do?
+      description: Describe the gameplay situation, class or mode, and the information you need. Do not attach private game material.
+    validations:
+      required: true
