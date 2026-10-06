@@ -2,6 +2,27 @@
 
 This manifest is a static status page for the first Eden Duo engine-load test. It does not display live Diablo III data or provide game controls.
 
+## Accepted product direction — 2026-10-06
+
+The owner selected **build and character details** as the lower display's primary
+purpose: reduce trips into Inventory while playing. The intended live layout has
+a compact level, health and class-resource strip, with most space reserved for
+equipped skills/runes and useful character statistics. Damage, toughness,
+recovery and selected bonuses are investigation priorities, not shipped fields.
+
+Only independently verified fields will enter the live interface. Character
+level is the first private milestone; health, resource, skills and statistics
+are still being investigated. The final supported subset depends on reliable
+read-only access and comparison with the game's menus. XP, maps and equipment
+interaction are deferred. No equipment-changing controls are planned for the
+first read-only release.
+
+Use legible sentence-case text, consistent alignment and original graphics.
+Keep diagnostics outside the normal interface. Missing data must clear promptly
+and explain its unavailable state without displaying guessed values. Check the
+finished layout and input routing on Thor before treating this direction as a
+validated interface.
+
 ## Layout
 
 The logical canvas is 1240 × 1080 with 72-pixel outer margins. One page places the project name above a prominent **DEVELOPMENT PREVIEW** banner and the message **Live game data is not connected**. A single inset panel lists three planned readouts: health, class resource and equipped skills. Each value is an empty em-dash shape. A final line identifies device validation as the next milestone.
