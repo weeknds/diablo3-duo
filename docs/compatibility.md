@@ -20,7 +20,8 @@ and captured lower-screen layout were verified on a Thor on 2026-10-06.
 | Installed Eden Duo / runtime version | Eden Duo 1.1.0 observed; runtime 18 confirmed in upstream source |
 | Device | AYN Thor / Android 13 confirmed by ADB; Black Max / 1 TB is owner-specified |
 | Package installation and layout on hardware | Static `0.1.0-dev` installed through Add-ons and rendered on the lower screen at the game title screen |
-| Gameplay input routing with the companion | Unverified |
+| Gameplay input routing with static `0.1.0-dev` | Unverified |
+| Input observed with the private level probe | Physical-control play raised the Barbarian from level 1 to 2; a lower-display tap and swipe left Inventory unchanged. Full input coverage remains pending. |
 | Performance on hardware | Unmeasured |
 
 The package currently contains only static text and shapes. It makes no memory

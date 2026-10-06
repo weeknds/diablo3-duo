@@ -45,7 +45,9 @@ The ZIP contains exactly `package.json` and `dualscreen/manifest.json`. Rebuildi
 
 ## Device evidence and installation
 
-The package declares companion runtime 18, which matches the upstream runtime checked on 2026-10-06. The observed device runs Android 13 and Eden Duo 1.1.0. The owner confirmed gameplay with a fresh non-seasonal Barbarian in a separate test profile, and a device capture recorded that session. The static companion was subsequently installed through Add-ons and rendered at the game title screen. Gameplay and input routing with the companion active remain unverified.
+The package declares companion runtime 18, which matches the upstream runtime checked on 2026-10-06. The observed device runs Android 13 and Eden Duo 1.1.0. The owner confirmed gameplay with a fresh non-seasonal Barbarian in a separate test profile, and a device capture recorded that session. The static `0.1.0-dev` companion was subsequently installed through Add-ons and rendered at the game title screen. Gameplay and input routing with that static package active remain unverified.
+
+With the separate private level probe active, the owner used the physical controls to raise the Barbarian from level 1 to 2. A later tap and swipe directed to the lower display left the game's Inventory state unchanged. These are limited observations; full input coverage remains pending.
 
 For another installation, first confirm that the unmodified game starts and runs satisfactorily. Use a disposable copy of the game's profile/save for development.
 

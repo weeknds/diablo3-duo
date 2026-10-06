@@ -1,7 +1,8 @@
 # Device validation protocol
 
-All observations below are **pending**. This document is a procedure, not a
-completed test record. Keep raw recordings and research captures in `private/`.
+This document is a reusable procedure, not a completed test record. See the
+[validation record](validation.md) for completed observations and pending checks.
+Keep raw recordings and research captures in `private/`.
 Publish only redacted observations or recordings you have permission to share.
 
 ## Record the setup

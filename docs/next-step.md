@@ -22,7 +22,7 @@
   lower screen at the game title screen. The
   [original lower-screen capture](images/development-preview-thor.png) shows the
   development message and unavailable live data. Gameplay input routing with
-  the companion active has not been verified.
+  that static package active has not been verified.
 - The temporary `dump_exefs` setting is restored to `false`; the exact two-line
   restoration and resulting configuration hash were verified. An ADB copy
   initially left this file shell-owned; Eden recreated it from cached settings
@@ -36,8 +36,10 @@
   It showed unavailable at startup and after quitting to the main menu.
   A physical-control play session changed the Barbarian from level 1 to 2;
   Inventory and the probe both showed 2. A fresh non-seasonal Wizard matched
-  at level 1. The first level milestone is observed; further fields,
-  lifecycle/input checks and performance measurement remain pending.
+  at level 1. With the private probe active, a tap and swipe directed to the
+  lower display left the game's Inventory state unchanged. The first level
+  milestone is observed; further fields, full lifecycle/input checks and
+  performance measurement remain pending.
 
 ## Immediate continuation
 
