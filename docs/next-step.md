@@ -46,12 +46,14 @@
 1. Check `private/device/session-state.json` for current device ownership and
    research state before interacting. Preserve owner settings, the test profile
    and the private save backup. Leave `dump_exefs` disabled.
-2. Record gameplay and controller/touch routing with the static companion active.
-   Keep that result separate from the already observed title-screen rendering.
-3. Review the private level milestone evidence and continue the separate health
-   probe. Its exact-build pointer and attribute-cache research is private;
-   health values still need hardware comparison. Keep research outside production
-   until the required evidence has been reviewed.
+2. Review the retained private level and attribute-reader evidence. Complete
+   gameplay and controller/touch coverage with the final live candidate; the
+   static preview's title-screen rendering is separate evidence.
+3. Follow the accepted [build and character details direction](ui-spec.md).
+   Prioritise equipped skills, selected runes, passives and useful menu-only
+   statistics. Health is an internal attribute-reader test and must not become
+   a default readout merely because it is easy to validate. Keep the private
+   research outside production until each field's evidence has been reviewed.
 4. Correlate a useful field with normal gameplay changes, derive a reproducible
    pointer route and validate type, bounds, ownership, relocation and lifetime.
    Apply the level milestone's menu comparison and repeat-launch/character

@@ -91,7 +91,7 @@ These are tooling tests with synthetic fixtures. They do not test Diablo III or 
 
 ## Next milestone
 
-Expand the private character-level milestone to a useful verified set of health, resource, progression or skill fields, then complete lifecycle and performance validation before a working release. Inventory interaction remains a separate later milestone. See [the continuation guide](docs/next-step.md) and [upstream investigation](docs/upstream-research.md).
+Expand the private character-level milestone into build and character details: equipped skills, selected runes, passives and useful statistics normally hidden in menus. Include only fields verified on the device. Health remains an internal reader test, not a planned default readout. Complete lifecycle and performance validation before a working release. Inventory interaction remains a separate later milestone. See [the continuation guide](docs/next-step.md) and [upstream investigation](docs/upstream-research.md).
 
 The documented live research path uses Linux. Current upstream native modules
 cannot load on macOS, and Android NCE does not provide the documented desktop
