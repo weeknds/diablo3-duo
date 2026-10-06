@@ -328,7 +328,7 @@ class InspectNspTests(unittest.TestCase):
 
     def test_partial_output_write_failure_leaves_no_report_or_temporary_file(self):
         output = self.root / "report.json"
-        original_open = io.open
+        original_open = Path.open
 
         class FailAfterPartialWrite:
             def __init__(self, stream):
@@ -353,7 +353,8 @@ class InspectNspTests(unittest.TestCase):
             return FailAfterPartialWrite(stream) if "x" in mode or "w" in mode else stream
 
         before = self.nsp.stat()
-        with mock.patch.object(io, "open", side_effect=fail_writing):
+        # Python 3.10's pathlib caches io.open; patch the boundary the tool uses.
+        with mock.patch.object(Path, "open", new=fail_writing):
             status, stdout, stderr = self.cli("--output", str(output))
         self.assertEqual((status, stdout), (2, ""))
         self.assertNotIn("Traceback", stderr)
