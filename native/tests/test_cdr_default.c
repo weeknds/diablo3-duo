@@ -7,7 +7,7 @@
 #define CDR_ENTRY (MAIN+UINT64_C(0x1921F98))
 static unsigned cdr_reads;
 static EdenDsmodBool cdr_read(void*p,uint64_t a,void*out,size_t n){if(a==CDR_ENTRY){CHECK(n==8);cdr_reads++;}return read_mem(p,a,out,n);}
-static EdenDsmodBool cdr_mapped(void*p,uint64_t a,uint64_t n){if(a>=MAIN+0x191EAD8&&a<MAIN+0x195EAD8)CHECK(a==CDR_ENTRY&&n==8);return mapped(p,a,n);}
+static EdenDsmodBool cdr_mapped(void*p,uint64_t a,uint64_t n){if(a>=MAIN+0x191EAD8&&a<MAIN+0x195EAD8){const uint64_t delta=a-DEFINITIONS;const uint32_t id=(uint32_t)(delta/64);CHECK(n==8&&delta%64==0&&(id==0xD3||id==0xFC||id==0xFD||id==0x4B7||id==0xFF||id==0x100||id==0xFE));}return mapped(p,a,n);}
 static uint32_t collision_key(unsigned n){const uint32_t high=(n+1)*0x1000u;return high|(((high>>12)^0x12Cu)&0x1FFu);}
 static void cdr_memory(Fixture*f,EdenDsmodHostApi*h,unsigned shared,unsigned count){
  CHECK(count<=8);CHECK(!f->regions[16].bytes);cdr_reads=0;h->read_memory=cdr_read;h->is_mapped=cdr_mapped;
@@ -23,7 +23,7 @@ static void cdr_only_clear(StatsProbeResult*r){CHECK(r->shared_identity_valid&&!
 static void cdr_absence_modes(void){for(unsigned mode=0;mode<2;mode++)for(unsigned count=0;count<=8;count++){
  Fixture f;EdenDsmodHostApi h=cdr_setup(&f,mode,count);StatsProbeResult r;stats_probe(&h,&f.initial_identity,&r);cdr_present(&r,0.375f);
  const unsigned common=mode?48:46,bytes=mode?346:330;
- CHECK(r.reads==common+2*(29+count)&&r.bytes==bytes+2*(424+16*count));CHECK(f.calls==r.reads&&f.maps==r.reads&&cdr_reads==2&&!f.writes);
+ CHECK(r.reads==common+22+2*(29+count)&&r.bytes==bytes+176+2*(424+16*count));CHECK(f.calls==r.reads&&f.maps==r.reads+12&&cdr_reads==2&&!f.writes);
  put32(&f,CDR_ENTRY+4,bits(0.0625f));stats_probe(&h,&f.initial_identity,&r);cdr_present(&r,0.0625f);release(&f);
 }}
 static void cdr_failure_kinds(void){for(unsigned mode=0;mode<2;mode++)for(unsigned kind=0;kind<11;kind++){
@@ -39,7 +39,7 @@ static void cdr_failure_kinds(void){for(unsigned mode=0;mode<2;mode++)for(unsign
  if(kind==8)put32(&f,CDR_ENTRY+4,UINT32_C(0x7F800000));
  if(kind==9)put32(&f,CDR_ENTRY+4,UINT32_C(0xFF800000));
  if(kind==10)put32(&f,CDR_ENTRY+4,bits(FLT_MAX));
- stats_probe(&h,&f.initial_identity,&r);cdr_only_clear(&r);CHECK(cdr_reads==(kind<=4?0u:2u));CHECK(r.reads<=122&&r.bytes<=1450&&!f.writes);release(&f);
+ stats_probe(&h,&f.initial_identity,&r);cdr_only_clear(&r);CHECK(cdr_reads==(kind<=4?0u:2u));CHECK(r.reads<=STATS_MAX_READS&&r.bytes<=STATS_MAX_BYTES&&!f.writes);release(&f);
 }}
 static void cdr_no_other_defaults(void){for(unsigned field=0;field<4;field++)if(field!=1){
  Fixture f;EdenDsmodHostApi h=cdr_setup(&f,1,0);StatsProbeResult r;put64(&f,OWNER+0x1C+8*shared_index[field],0);stats_probe(&h,&f.initial_identity,&r);
@@ -75,7 +75,7 @@ static void cdr_late_shared_changes(void){for(unsigned kind=0;kind<3;kind++){
 }
  Fixture f;EdenDsmodHostApi h=cdr_setup(&f,1,8);StatsProbeResult r;f.mutate_on=99;f.change_size=1;f.change_address=GROUP+4;f.change_value=6;stats_probe(&h,&f.initial_identity,&r);CHECK(!r.shared_identity_valid);check_all(&r,0);release(&f);
 }
-static void cdr_suite(void){cdr_absence_modes();cdr_failure_kinds();cdr_no_other_defaults();cdr_extent_and_dirty();cdr_snapshot_changes();cdr_late_shared_changes();puts("PASS CDR-only runtime defaults: typed absence modes, terminal/cap/cycle distinctions, ID/float/range gates, path/default changes and final shared clearing;122/1450 cap");}
+static void cdr_suite(void){cdr_absence_modes();cdr_failure_kinds();cdr_no_other_defaults();cdr_extent_and_dirty();cdr_snapshot_changes();cdr_late_shared_changes();puts("PASS CDR-only runtime defaults: typed absence modes, terminal/cap/cycle distinctions, ID/float/range gates, path/default changes and final shared clearing; bounded extended reader");}
 #ifndef CDR_EMBED
 int main(void){stat_suite();cdr_suite();return 0;}
 #endif

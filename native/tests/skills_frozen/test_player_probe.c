@@ -33,18 +33,18 @@ static EdenDsmodHostApi setup(Fixture*f){
  EdenDsmodHostApi h={.userdata=f,.main_base=MAIN,.main_size=0x1200000,.is_mapped=mapped,.read_memory=read_mem,.write_memory=write_mem};return h;
 }
 static void release(Fixture*f){for(unsigned i=0;i<8;i++)free(f->regions[i].bytes);}
-static void valid(void){Fixture f;EdenDsmodHostApi h=setup(&f);PlayerProbeResult r;player_probe(&h,&r);CHECK(r.available&&r.level==42);CHECK(r.reads==27&&r.bytes==212);CHECK(f.calls==27&&f.maps==27&&f.writes==0);release(&f);}
-static void failures_clear(void){for(unsigned n=1;n<=27;n++){Fixture f;EdenDsmodHostApi h=setup(&f);f.fail_on=n;PlayerProbeResult r={.available=1,.level=42};player_probe(&h,&r);CHECK(!r.available&&r.level==0);CHECK(f.calls==n&&r.reads==n&&r.bytes<=212&&f.writes==0);release(&f);}}
+static void valid(void){Fixture f;EdenDsmodHostApi h=setup(&f);PlayerProbeResult r;player_probe(&h,&r);CHECK(r.available&&r.level==42);CHECK(r.reads==PLAYER_MAX_READS&&r.bytes==PLAYER_MAX_BYTES);CHECK(f.calls==PLAYER_MAX_READS&&f.maps==PLAYER_MAX_READS&&f.writes==0);release(&f);}
+static void failures_clear(void){for(unsigned mapping=0;mapping<2;mapping++)for(unsigned n=1;n<=PLAYER_MAX_READS;n++){Fixture f;EdenDsmodHostApi h=setup(&f);if(mapping)f.map_fail_on=n;else f.fail_on=n;PlayerProbeResult r={.available=1,.level=42,.hero_class_available=1,.paragon_available=1};player_probe(&h,&r);CHECK(!r.available&&r.level==0&&!r.hero_class_available&&!r.paragon_available);CHECK(f.maps==n&&f.calls==(mapping?n-1:n)&&r.reads==f.calls&&r.bytes<=PLAYER_MAX_BYTES&&f.writes==0);release(&f);}}
 static void invalid_states(void){
  const struct{uint64_t address,value;size_t size;}cases[]={
  {MAIN+0x114A840,0,8},{MAIN+0x114A840,G+1,8},{G+0x10,UINT64_MAX-3,8},{C+0x84,0,4},{C+0x84,UINT32_MAX,4},{C+0xBA0,0,8},{C+0x948,0,8},{C+0x948,UINT64_MAX-7,8},
  {SEL+16,0,4},{SEL+16,2,4},{SEL+4,0,4},{SEL,4,4},{SEL,UINT32_MAX,4},{SEL+4,UINT32_MAX-1,4},
  {PLAYER,1,4},{PLAYER+4,UINT32_MAX,4},{PLAYER+8,UINT32_MAX,4},{C+0xA98,0,8},{POOL+0x100,3,4},{POOL+0x168,17,4},{POOL+0x120,0,8},{TABLE,0,8},{ACTOR,0,4},{PLAYER+0xD68C,0,4},{PLAYER+0xD68C,71,4}};
- for(size_t i=0;i<sizeof cases/sizeof cases[0];i++){Fixture f;EdenDsmodHostApi h=setup(&f);put(&f,cases[i].address,cases[i].value,cases[i].size);PlayerProbeResult r={.available=1,.level=42};player_probe(&h,&r);if(r.available)fprintf(stderr,"case %zu\n",i);CHECK(!r.available&&r.level==0&&r.reads<=27&&r.bytes<=212&&f.writes==0);release(&f);}
+ for(size_t i=0;i<sizeof cases/sizeof cases[0];i++){Fixture f;EdenDsmodHostApi h=setup(&f);put(&f,cases[i].address,cases[i].value,cases[i].size);PlayerProbeResult r={.available=1,.level=42};player_probe(&h,&r);if(r.available)fprintf(stderr,"case %zu\n",i);CHECK(!r.available&&r.level==0&&r.reads<=PLAYER_MAX_READS&&r.bytes<=PLAYER_MAX_BYTES&&f.writes==0);release(&f);}
 }
 static void no_stale_snapshot(void){
  const struct{uint64_t address,value;size_t size;}changes[]={{MAIN+0x114A840,0,8},{C+0x84,0,4},{C+0x84,UINT32_MAX,4},{SEL+16,2,4},{PLAYER+4,124,4},{PLAYER+8,UINT32_MAX,4},{POOL+0x100,5,4},{ACTOR,0,4}};
- for(size_t i=0;i<sizeof changes/sizeof changes[0];i++){Fixture f;EdenDsmodHostApi h=setup(&f);f.mutate_on=15;f.change_address=changes[i].address;f.change_value=changes[i].value;f.change_size=changes[i].size;PlayerProbeResult r;player_probe(&h,&r);CHECK(!r.available&&r.level==0&&r.reads<=27);release(&f);}
+ for(size_t i=0;i<sizeof changes/sizeof changes[0];i++){Fixture f;EdenDsmodHostApi h=setup(&f);f.mutate_on=15;f.change_address=changes[i].address;f.change_value=changes[i].value;f.change_size=changes[i].size;PlayerProbeResult r;player_probe(&h,&r);CHECK(!r.available&&r.level==0&&r.reads<=PLAYER_MAX_READS);release(&f);}
 }
 static void invalid_main(void){Fixture f;EdenDsmodHostApi h=setup(&f);PlayerProbeResult r;h.main_size=0x114A847;player_probe(&h,&r);CHECK(!r.available&&f.calls==0);h.main_size=UINT64_MAX;player_probe(&h,&r);CHECK(!r.available&&f.calls==0);release(&f);}
 int main(void){valid();failures_clear();invalid_states();no_stale_snapshot();invalid_main();puts("PASS synthetic player reader: bounded route, startup/liveness gates, consistency, failures clear; no writes");return 0;}

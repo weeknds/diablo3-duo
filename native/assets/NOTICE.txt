@@ -1,0 +1,4 @@
+Duo Sans is an ASCII bitmap derivative of Source Sans 3 Regular.
+Copyright 2010-2024 Adobe. OFL-1.1. Modified font name: Duo Sans.
+Cinzel lettering: Copyright 2020 The Cinzel Project Authors. OFL-1.1.
+Line icons are original code-drawn graphics. No character or game art.

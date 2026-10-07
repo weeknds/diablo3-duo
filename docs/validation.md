@@ -1,6 +1,79 @@
 # Validation record
 
-## Current candidate — 2026-10-07
+## Current preview 0.2.0-dev — 2026-10-07
+
+This experimental preview adds character attributes, equipped-slot inspection
+and live exploration/terrain to the portrait-free native dashboard. It is not a
+stable or broadly supported release. The separate root static package remains
+`0.1.1-dev`.
+
+### Package and focused verification
+
+| Artifact | SHA-256 |
+| --- | --- |
+| `dist/release-0.2.0-final/01001B300B9BE000.dsmod.zip` | `3b59e3aeed7b01ab616a41c4ae31abf29828629056bbc9c2ac10b7a671efbc03` |
+| Android arm64 native module | `a72d57a8a04ce76bcf265c967630c050a2ce531a3089801f5c444a841c9a617b` |
+
+The expansion passed twelve native sanitizer suites and 81 public Python tests
+before the final device corrections. Focused equipment, navigation and module
+sanitizer checks then passed for the corrected packed-array alignment, dirty-key
+lookup and equipped-slot fixtures. The final hand-label correction passed all
+20 native UI/package Python checks. NDK r28c compiled with strict warnings and
+verified the packaged source/assets, exact executable gate and module hash.
+Two builds of the final module matched its pinned binary hash. Static package
+validation also passed. These are host checks, not broad gameplay proof.
+
+### Thor observations for this expansion
+
+The same Android 13/API 33 Thor runs Eden Duo 1.1.0/runtime 18 with Diablo III
+update `2.7.7.92380`, NCE and Turnip T30. The exact executable gate is:
+
+```text
+2607A74F5DF7754CC0357B5DF7E496931355D8CA000000000000000000000000
+```
+
+Checks used the separate DuoTest profile and a non-seasonal level-2 Barbarian.
+The normal profile was preserved. The final package was installed through Eden's Add-ons UI; device readback
+matched the native-module hash above. The companion performs read-only guest access;
+its touch actions select views, inspect an item or change a local map pin.
+
+- **Character:** level 2, Paragon 0, Strength 13, Dexterity 9, Intelligence 9,
+  Vitality 11, attack speed 1.20, armor 31, critical chance 5%, cooldown reduction
+  0%, resource cost reduction 0% and movement bonus +0% rendered. The native
+  character-menu comparisons matched the observed fields; nonzero reduction
+  bonuses and high-level characters were not checked in this expansion.
+- **Equipment:** the axe and shield occupy the two hand slots; the other eleven
+  slots are empty. Base-name inspection resolves Weathered Hand Axe and Buckler.
+  The native left-hand/right-hand enumeration is mapped to the main-hand/off-hand
+  presentation observed in Inventory. Rolled affixes and complete item names are
+  not claimed.
+- **Map:** New Tristram terrain and explored coverage render around the player.
+  Zoom, recenter and a local pin work. The terrain reader accepts the observed
+  four-byte-aligned grid allocation and preserves its bounded ownership checks.
+  This observation does not establish all dungeon geometry or dynamic obstacles.
+- **Skills:** Bash and Hammer of the Ancients render with no rune selected; four
+  slots are unassigned. Actual rune names remain outside the implementation.
+- **Startup:** character values clear to unavailable before entering gameplay.
+  The final package uses the production module, not the earlier private diagnostic.
+
+Companion-only captures are linked from the README. Game-menu comparisons and
+raw device evidence remain private. The release includes no game art, ROM,
+firmware, keys, saves or executable dumps.
+
+### Deliberate limits
+
+At the owner's request, this completion pass did not repeat extended benchmark,
+lifecycle, death, class or equipment-change cycles. The earlier 0.1.2 observations
+below remain historical; they do not measure the new readers' performance.
+Sustained gameplay overhead, broader classes/languages/modes and all travel/error
+states remain unverified. No stable-support declaration is enabled.
+
+Automatic pylons/exits, Greater Rift progress/timing, item rolls/comparison,
+sheet damage/toughness/recovery, critical damage, actual rune names, passives and
+buff timers are not implemented. Terrain is static ground coverage; unsupported
+scenes may be omitted. Missing or rejected data remains unavailable.
+
+## Earlier candidate 0.1.2-rc.1 — 2026-10-07
 
 `0.1.2-rc.1` is a live test candidate, not a stable or broadly supported release. It includes a bounded, read-only native reader and the Character/Skills interface. The separate static `0.1.1-dev` package and its root metadata remain unchanged in scope. No supported build has been declared.
 

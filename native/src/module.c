@@ -1,16 +1,30 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 #include "details_probe.h"
 #include "name_layout.h"
+#include "equipment_probe.h"
+#include "equipment_inspect.h"
+#include "map_view.h"
+#include "dsmod_module_extensions.h"
+#include <pthread.h>
 #include <inttypes.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
 #define TITLE_ID UINT64_C(0x01001B300B9BE000)
-#define REQUIRED_CAPS EDEN_DSMOD_CAP_NO_TICK_WHEN_HIDDEN
+#define REQUIRED_CAPS (EDEN_DSMOD_CAP_NO_TICK_WHEN_HIDDEN | EDEN_DSMOD_CAP_EXTENSIONS)
 static const char expected_build[] = "2607A74F5DF7754CC0357B5DF7E496931355D8CA000000000000000000000000";
 static const uint8_t expected_bytes[32] = {0x26,0x07,0xA7,0x4F,0x5D,0xF7,0x75,0x4C,0xC0,0x35,0x7B,0x5D,0xF7,0xE4,0x96,0x93,0x13,0x55,0xD8,0xCA,0,0,0,0,0,0,0,0,0,0,0,0};
-typedef struct ModuleState { int rejected; } ModuleState;
+typedef struct ModuleState {
+    int rejected, cached;
+    uint64_t next_refresh, next_navigation_refresh;
+    PlayerProbeIdentity owner;
+    EquipmentProbeResult equipment;
+    EquipmentInspectResult inspection;
+    int selected_slot;
+    MapView map;
+    pthread_mutex_t map_lock;
+} ModuleState;
 
 static EdenDsmodBool supports(const char *build) { return build && !strcmp(build, expected_build); }
 static int valid_host(const EdenDsmodHostApi *h) {
@@ -26,7 +40,22 @@ static int valid_identity(const EdenDsmodHostApi *h) {
 }
 static void *create(const EdenDsmodHostApi *h, const char *config) {
     (void)config;
-    return valid_host(h) && valid_identity(h) ? calloc(1, sizeof(ModuleState)) : NULL;
+    if (!valid_host(h) || !valid_identity(h)) return NULL;
+    ModuleState *state=calloc(1,sizeof *state);
+    if (!state) return NULL;
+    if (pthread_mutex_init(&state->map_lock,NULL)) { free(state); return NULL; }
+    state->map.zoom=1.0f; state->selected_slot=-1;
+    return state;
+}
+
+static void clear_cached(ModuleState *state) {
+    state->equipment=(EquipmentProbeResult){0};
+    state->inspection=(EquipmentInspectResult){0}; state->selected_slot=-1;
+    pthread_mutex_lock(&state->map_lock);
+    if (state->map.data.available || state->map.pinned) map_view_clear(&state->map);
+    pthread_mutex_unlock(&state->map_lock);
+    state->cached=0;
+    state->next_navigation_refresh=0;
 }
 
 static void sample(void *instance, const EdenDsmodHostApi *h) {
@@ -36,7 +65,61 @@ static void sample(void *instance, const EdenDsmodHostApi *h) {
     if(!valid_identity(h))state->rejected=1;
     DetailsProbeResult result={0};
     if(!state->rejected)details_probe(h,&result);
-    const int available=result.shared_identity_valid;
+    int available=result.shared_identity_valid;
+    const uint64_t now=h->get_tick(h->userdata);
+    const int changed=available && (!state->cached || memcmp(&state->owner,&result.level.identity,sizeof state->owner));
+    if (!available || changed) {
+        clear_cached(state);
+    }
+    if (available && (!state->cached || now>=state->next_refresh)) {
+        equipment_probe(h,&result.level.identity,&state->equipment);
+        state->inspection=(EquipmentInspectResult){0};
+        if (state->selected_slot>=0 && state->selected_slot<(int)EQUIPMENT_SLOT_COUNT && state->equipment.shared_identity_valid)
+            equipment_inspect(h,&result.level.identity,(unsigned)state->selected_slot,
+                              &state->equipment.slots[state->selected_slot],&state->inspection);
+        MapProbeResult map={0};
+        map_probe(h,&result.level.identity,&map);
+        pthread_mutex_lock(&state->map_lock);
+        const int new_world=!state->map.data.available||state->map.data.world_id!=map.world_id;
+        map_view_update(&state->map,&map);
+        pthread_mutex_unlock(&state->map_lock);
+        if (map.available && (new_world||now>=state->next_navigation_refresh)) {
+            NavProbeResult navigation={0};
+            nav_probe(h,&result.level.identity,map.world_id,&navigation);
+            pthread_mutex_lock(&state->map_lock);
+            map_view_update_navigation(&state->map,&navigation);
+            pthread_mutex_unlock(&state->map_lock);
+            state->next_navigation_refresh=now+60; // Static terrain needs only 1Hz.
+        }
+        state->owner=result.level.identity; state->cached=1;
+        state->next_refresh=now+15; // Runtime ticks are 60Hz; bound heavy scans to 4Hz.
+    }
+    // A world can change without changing the selected-player handle. Do not
+    // keep the previous area's image or pin until the next 4Hz mask refresh.
+    if (available) {
+        pthread_mutex_lock(&state->map_lock);
+        const int map_available=state->map.data.available;
+        pthread_mutex_unlock(&state->map_lock);
+        if (map_available) {
+            uint32_t world=UINT32_MAX;
+            const int current=map_current_world(h,&result.level.identity,&world);
+            pthread_mutex_lock(&state->map_lock);
+            if (!current || world!=state->map.data.world_id) {
+                map_view_clear(&state->map);
+                state->next_refresh=0;
+                state->next_navigation_refresh=0;
+            }
+            pthread_mutex_unlock(&state->map_lock);
+        }
+        // Close all readers, including the world check, with the selected
+        // player. No optional scan can leave earlier details visible on quit.
+        PlayerProbeResult closing={0};
+        player_probe(h,&closing);
+        if (!closing.available || memcmp(&closing.identity,&result.level.identity,sizeof closing.identity)) {
+            available=0;
+            clear_cached(state);
+        }
+    }
     char level[64];
     if(available)snprintf(level,sizeof level,"Level %" PRId32,result.level.level);
     else snprintf(level,sizeof level,"Level unavailable");
@@ -66,13 +149,60 @@ static void sample(void *instance, const EdenDsmodHostApi *h) {
         }
     }
     const char *status;
-    if(state->rejected)status="Companion unavailable. Reload for the supported research build.";
+    if(state->rejected)status="Companion unavailable. Check the game version and reload.";
     else if(!available)status="Character data unavailable. Start a game or wait for loading.";
-    else if(partial)status="Some details are unavailable in this private preview.";
-    else status="Read-only character view.";
+    else if(partial)status="Some details are unavailable in this preview.";
+    else status="Live character details.";
     h->begin_output(h->userdata);
     h->publish_text(h->userdata,"details.level",level);
     h->publish_text(h->userdata,"details.status",status);
+    const int class_index=available&&result.level.hero_class_available?result.level.hero_class+1:0;
+    h->publish_i64(h->userdata,"details.class_index",class_index);
+    char paragon[64];
+    if (available&&result.level.paragon_available)
+        snprintf(paragon,sizeof paragon,"Paragon %" PRId32,result.level.paragon);
+    else snprintf(paragon,sizeof paragon,"Paragon unavailable");
+    h->publish_text(h->userdata,"details.paragon",paragon);
+    for (unsigned i=0;i<EQUIPMENT_SLOT_COUNT;i++) {
+        const EquipmentSlot *slot=&state->equipment.slots[i];
+        const char *text="Unavailable";
+        if (available&&state->equipment.shared_identity_valid&&slot->available)
+            text=slot->occupied?"Equipped item":"Empty slot";
+        char key[40];snprintf(key,sizeof key,"gear.%u.name",i);
+        h->publish_text(h->userdata,key,text);
+    }
+    static const char *slot_names[EQUIPMENT_SLOT_COUNT]={"Head","Torso","Off-hand","Main hand",
+        "Hands","Waist","Feet","Shoulders","Legs","Bracers","Right ring","Left ring","Neck"};
+    const char *selected_name="Select an equipment slot", *selected_slot="Equipment inspection";
+    const char *inspect_note="Tap an equipped slot to see its base item name.";
+    if (available&&state->selected_slot>=0&&state->selected_slot<(int)EQUIPMENT_SLOT_COUNT) {
+        const EquipmentSlot *slot=&state->equipment.slots[state->selected_slot];
+        selected_slot=slot_names[state->selected_slot];
+        selected_name="Unavailable";inspect_note="Item details are unavailable.";
+        if (state->equipment.shared_identity_valid&&slot->available&&!slot->occupied) {
+            selected_name="Empty slot";inspect_note="Nothing is equipped in this slot.";
+        } else if (state->inspection.shared_identity_valid&&state->inspection.item_valid&&
+                   state->inspection.base_name_available) {
+            selected_name=state->inspection.base_name;
+            inspect_note="Base item name. Rolled affixes and comparisons are not shown.";
+        }
+    }
+    h->publish_text(h->userdata,"gear.selected_slot",selected_slot);
+    h->publish_text(h->userdata,"gear.selected_name",selected_name);
+    h->publish_text(h->userdata,"gear.inspect_note",inspect_note);
+    pthread_mutex_lock(&state->map_lock);
+    const MapView *view=&state->map;
+    const int terrain_available=view->navigation.available&&view->data.exploration_available;
+    h->publish_i64(h->userdata,"map.available",available&&view->data.available);
+    char map_key[80];snprintf(map_key,sizeof map_key,"module:exploration:%" PRIu64,view->revision);
+    h->publish_text(h->userdata,"map.image",map_key);
+    h->publish_text(h->userdata,"map.description",view->data.available?
+        (terrain_available?"Terrain  /  White marker: you  /  Gold marker: your pin":
+         view->data.exploration_available?"Explored areas  /  White marker: you  /  Gold marker: your pin":
+         "Your position is available. Explored areas are unavailable."):
+        "Enter the world to begin exploring.");
+    h->publish_text(h->userdata,"map.status",map_view_status(view));
+    pthread_mutex_unlock(&state->map_lock);
     for(unsigned i=0;i<SKILL_SLOT_COUNT;i++) {
         char key[40];
         snprintf(key,sizeof key,"skills.%u.name",i);h->publish_text(h->userdata,key,names[i]);
@@ -83,14 +213,83 @@ static void sample(void *instance, const EdenDsmodHostApi *h) {
         h->publish_text(h->userdata,key,values[i]);
     }
     h->end_output(h->userdata);
-    // Every row is replaced per sample. No guest pointers or values persist.
+    // Every row is replaced per sample. Heavy readers cache at most 15 ticks;
+    // their numeric results are cleared when selected-player ownership changes.
 }
 static void tick(void *instance, const EdenDsmodHostApi *h) { (void)instance; (void)h; }
-static void destroy(void *instance) { free(instance); }
+static void destroy(void *instance) {
+    ModuleState *state=instance;
+    if (state) pthread_mutex_destroy(&state->map_lock);
+    free(state);
+}
+static void configure(void *instance,const EdenDsmodHostExtensions *host) {
+    (void)instance;(void)host; // No guest mailbox or write service is requested.
+}
+static EdenDsmodBool action(void *instance,const char *name,int64_t argument) {
+    ModuleState *state=instance;
+    if (!state || state->rejected || !name) return 0;
+    if (!strcmp(name,"inspect_equipment")) {
+        if (!state->cached || argument<0 || argument>=EQUIPMENT_SLOT_COUNT) return 0;
+        state->selected_slot=(int)argument; state->next_refresh=0;
+        state->inspection=(EquipmentInspectResult){0};
+        return EDEN_DSMOD_TRUE;
+    }
+    pthread_mutex_lock(&state->map_lock);
+    const int accepted=map_view_action(&state->map,name);
+    pthread_mutex_unlock(&state->map_lock);
+    return accepted?EDEN_DSMOD_TRUE:EDEN_DSMOD_FALSE;
+}
+static EdenDsmodBool load_image(void *instance,const EdenDsmodHostApi *host,const char *key,
+                               void *receiver,EdenDsmodImageSink sink) {
+    (void)host;
+    ModuleState *state=instance;
+    if (!state || !key || !sink) return 0;
+    static const char prefix[]="module:exploration:";
+    if (strncmp(key,prefix,sizeof prefix-1)) return 0;
+    const char *digit=key+sizeof prefix-1;
+    uint64_t revision=0;
+    unsigned count=0;
+    for (;*digit;++digit) {
+        if (*digit<'0'||*digit>'9'||++count>20) return 0;
+        const unsigned value=(unsigned)(*digit-'0');
+        if (revision>(UINT64_MAX-value)/10) return 0;
+        revision=revision*10+value;
+    }
+    if (!count) return 0;
+    MapView view;
+    pthread_mutex_lock(&state->map_lock);
+    const int match=revision==state->map.revision&&state->map.data.available;
+    if (match) view=state->map;
+    pthread_mutex_unlock(&state->map_lock);
+    if (!match) {
+        // Workers may receive a revision after a newer sample superseded it.
+        // Successful transparent content avoids filling the host's failed-key
+        // cache, and cannot display an earlier world's map.
+        const uint8_t clear[4]={0};
+        sink(receiver,1,1,clear,sizeof clear);
+        return EDEN_DSMOD_TRUE;
+    }
+    uint8_t *pixels=malloc(MAP_IMAGE_BYTES);
+    if (!pixels) return 0;
+    const int rendered=map_view_render(&view,pixels,MAP_IMAGE_BYTES);
+    if (rendered) sink(receiver,MAP_IMAGE_WIDTH,MAP_IMAGE_HEIGHT,pixels,MAP_IMAGE_BYTES);
+    free(pixels);
+    return rendered?EDEN_DSMOD_TRUE:EDEN_DSMOD_FALSE;
+}
+static const EdenDsmodModuleExtensions extensions={
+    .version=EDEN_DSMOD_EXT_VERSION,.struct_size=sizeof(EdenDsmodModuleExtensions),
+    .abi_hash=EDEN_DSMOD_EXT_HASH,.configure=configure,.on_action=action,.load_image=load_image
+};
+#if defined(__GNUC__)
+__attribute__((visibility("default")))
+#endif
+const EdenDsmodModuleExtensions *eden_dsmod_get_extensions(uint32_t version,uint64_t hash) {
+    return version==EDEN_DSMOD_EXT_VERSION&&hash==EDEN_DSMOD_EXT_HASH?&extensions:NULL;
+}
 static const EdenDsmodModuleApi module = {
     .abi_version=EDEN_DSMOD_MODULE_ABI_VERSION, .struct_size=sizeof(EdenDsmodModuleApi),
     .abi_hash=EDEN_DSMOD_MODULE_ABI_HASH, .title_id=TITLE_ID,
-    .name="Diablo III Duo skill names 0.0.10-research", .capabilities=REQUIRED_CAPS,
+    .name="Diablo III Duo 0.2.0-dev", .capabilities=REQUIRED_CAPS,
     .supports_build=supports, .create=create, .destroy=destroy, .sample=sample, .tick=tick
 };
 #if defined(__GNUC__)

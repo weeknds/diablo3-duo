@@ -1,67 +1,39 @@
-# Native design preview
+# Native live interface
 
-`0.1.1-dev` is a static, three-page Eden Duo companion. The October 7 redesign
-uses the owner's dark fantasy references: warm black, antique gold and cream
-serif headings, with no character imagery. It has not been installed or tested on
-the Thor. [PRODUCT.md](../PRODUCT.md) records purpose and constraints;
-[DESIGN.md](../DESIGN.md) records the visual system.
+The `0.2.0-dev` native preview uses a 1240 × 1080 canvas for the Thor's lower
+display. The owner's reference sets its warm black, antique gold and cream
+palette. Cinzel headings, a readable Duo Sans bitmap font and original line icons
+carry the theme without character artwork or a duplicate health/resource HUD.
 
-## Product direction
+Character opens first. Three persistent bottom tabs select Character, Map and
+Skills; Equipment is a nested Character view with its own return button.
 
-The owner selected **build and character details** to reduce visits to the game's
-menus. Equipped skills, selected runes, passives and useful statistics remain the
-intended live direction. A duplicated health/resource display is not part of this
-layout. Critical chance, resistances and additional bonuses are investigation
-priorities, not shipped integrations.
-
-Earlier private research has narrow menu-comparison evidence for level, three
-skill names, attack speed and armor, plus movement at +0%. Those private readers
-are not included here. Only independently verified fields may enter a future
-live package. Equipment changes and other game actions remain a later milestone.
-
-## Pages and layout
-
-The native manifest uses a 1240 × 1080 logical canvas, 44 px content margins,
-an 84 px brand bar and 100 px bottom-navigation region. Character opens first.
-Every page shows **DESIGN PREVIEW** and **Live game data is not connected**.
-
-| Page | Current presentation |
+| View | Content and interaction |
 | --- | --- |
-| Character | Level beside the heading; attacks per second, cooldown reduction, armor and movement bonus in a full-width 2 × 2 sheet. Statistics are `--`. Six numbered unavailable skills appear below in two columns. View skills opens Combat. |
-| Combat | Two columns of three wide numbered skill/rune rows, followed by an unavailable runes/effects message. |
-| Map | Compact centered unavailable state with a plain explanation that map support is not included. |
+| Character | Class, level and Paragon; a four-column primary-attribute strip; six combat statistics in two columns. Equipment opens the slot sheet. |
+| Equipment | Thirteen labeled slots in two columns. Each reports occupied, empty or unavailable. Tapping a slot opens an inline base-name inspection panel. It does not change equipment. |
+| Skills | Six numbered equipped-skill rows. Empty slots say Unassigned. Known no-rune states and unavailable rune names are distinguished. |
+| Map | Explored coverage, supported terrain and player marker. Controls zoom, center on the player, pin the current location and clear that pin. World changes discard the pin. |
 
-No portraits, figures or replacement character artwork are used. There are no
-equipment comparison controls or buff timers.
-Cinzel heading images and the Duo Sans ASCII bitmap font provide typography;
-original code-drawn pictograms identify pages. Character uses a document glyph;
-skill rows use numbers. Bottom icon/label groups are centered using font metrics. OFL licenses and notices
-travel with the package. See [asset provenance](../design/ASSETS.md).
+The image on Map is rendered from copied numeric observations. It contains no
+extracted game textures. Partial terrain is stated in the footer; dynamic doors,
+enemies, pylon/exit labels and Greater Rift timing/progress are not provided.
 
-## Behavior
+All pages carry **LIVE PREVIEW**. Module readiness/error gates replace values with
+unavailable states; startup does not display sample data. Equipment base names
+are explicitly labeled, rather than presented as complete affixed names or item
+rolls. Critical damage and sheet damage/toughness/recovery are not in this reader.
 
-The manifest declares runtime 18, `requires_module: false` and `nav: false`.
-Its only actions have `kind: page`; the three tabs and Character's skills link
-select local companion pages. Bottom tap regions are 413, 413 and 414 px wide
-by 98 px high; the View skills link is 228 × 88 px. These are manifest dimensions,
-not verified device touch behavior. Controller navigation is disabled in the
-manifest; preservation of normal gameplay input still needs device testing.
+The live manifest disables controller navigation. Touch actions either change
+companion pages, select a read-only inspection or change the companion's local
+map view. They perform no game actions. The native image worker receives an
+owned numeric snapshot under a mutex; it does not read guest memory.
 
-All content uses static labels, rectangles and packaged images. There are no
-memory reads, writes, derived game values, game-button injection or live binds.
-Unavailable values remain unavailable in every game state and executable build.
+Content uses 44 px side margins, an 84 px brand bar and a 98 px bottom-navigation
+region. Equipment rows and map controls are 70 px tall. These dimensions describe
+the 1240 × 1080 target, not support for other display classes.
 
-## Desktop previews and evidence
-
-`python3 tools/render_preview.py` draws the actual manifest with its packaged
-font atlas and images. The renderer approximates native drawing on the desktop;
-its output is not a device capture. `--sample` substitutes illustrative labels
-only while rendering PNGs, with a visible sample-data message. `--stress` checks
-long illustrative names and values offline. Neither mode changes the installable
-manifest or establishes game accuracy or coverage.
-
-The earlier single-page `0.1.0-dev` package was installed and rendered on the
-Thor on 2026-10-06; its [original capture](images/development-preview-thor.png)
-remains historical evidence for that version only. Fresh installation, font and
-image rendering, tab hit testing, gameplay input and performance checks are
-pending for this redesign. See [next-step.md](next-step.md).
+See [validation](validation.md), [asset provenance](../design/ASSETS.md) and
+[the native builder](../native/README.md). The older root `0.1.1-dev` builder
+remains a separate static design preview; its offline sample renders and metadata
+do not describe the live package.

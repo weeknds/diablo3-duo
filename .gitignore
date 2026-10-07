@@ -23,3 +23,5 @@ romfs/
 exefs/
 captures/
 memory-dumps/
+
+.impeccable/review/

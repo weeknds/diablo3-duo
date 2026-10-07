@@ -23,7 +23,7 @@ static const float values[4]={1.25f,0.125f,102.5f,1.25f};
 static uint32_t bits(float v){uint32_t b;memcpy(&b,&v,4);return b;}
 static uint64_t node_address(unsigned field,unsigned node){return NODES+0x100*field+16*node;}
 static void stat_memory(Fixture*f,int shared,unsigned count){
- uint64_t bases[8]={ACD_GLOBALS,ACD_POOL,ACD_TABLE,ACD_PAGE,GROUP,BUCKETS,OWNER,NODES};size_t sizes[8]={8,0x170,32,0xD80,0x30,0x800,0x1028,0x400};
+ uint64_t bases[8]={ACD_GLOBALS,ACD_POOL,ACD_TABLE,ACD_PAGE,GROUP,BUCKETS,OWNER,NODES};size_t sizes[8]={8,0x170,32,0xD80,0x30,0x800,0x1028,0x1000};
  for(unsigned i=0;i<8;i++){f->regions[i+8]=(Region){bases[i],sizes[i],calloc(1,sizes[i])};CHECK(f->regions[i+8].bytes);}
  put32(f,PLAYER+4,ACD_ID);put64(f,C+0x9A0,ACD_GLOBALS);put64(f,ACD_GLOBALS,ACD_POOL);
  put32(f,ACD_POOL+0x100,4);put32(f,ACD_POOL+0x168,2);put64(f,ACD_POOL+0x120,ACD_TABLE);put64(f,ACD_TABLE,ACD_PAGE);put32(f,ACD,ACD_ID);
@@ -40,8 +40,8 @@ static void check_all(const StatsProbeResult*r,int wanted){for(unsigned i=0;i<4;
 static void stats_valid(void){for(int mode=0;mode<2;mode++)for(unsigned count=1;count<=8;count+=7){
  Fixture f;EdenDsmodHostApi h=stat_setup(&f,mode,count);StatsProbeResult r;stats_probe(&h,&f.initial_identity,&r);CHECK(r.shared_identity_valid);check_all(&r,1);
  for(unsigned i=0;i<4;i++)CHECK(r.fields[i].raw==values[i]);
- const unsigned want_reads=(mode?56:54)+8*count, want_bytes=(mode?410:394)+128*count;
- CHECK(r.reads==want_reads&&r.bytes==want_bytes&&f.calls==r.reads&&f.maps==r.reads);CHECK(r.reads<=120&&r.bytes<=1434&&f.writes==0);release(&f);
+ const unsigned want_reads=(mode?78:76)+8*count, want_bytes=(mode?586:570)+128*count;
+ CHECK(r.reads==want_reads&&r.bytes==want_bytes&&f.calls==r.reads&&f.maps==r.reads);CHECK(r.reads<=STATS_MAX_READS&&r.bytes<=STATS_MAX_BYTES&&f.writes==0);release(&f);
 }}
 // Catches returning early after a field error and accidentally retaining old data or losing unrelated stats.
 static void field_independence(void){for(unsigned field=0;field<4;field++)for(unsigned kind=0;kind<6;kind++){
@@ -57,18 +57,19 @@ static void field_independence(void){for(unsigned field=0;field<4;field++)for(un
  CHECK(f.calls>32&&f.writes==0);release(&f);
 }}
 // Catches every guest read/map failure being ignored. Successful fields must never use a failed access.
-static void failure_positions(void){for(unsigned mode=0;mode<2;mode++)for(unsigned n=1;n<=120;n++){
+static void failure_positions(void){for(unsigned mode=0;mode<2;mode++)for(unsigned n=1;n<=142;n++){
  Fixture f;EdenDsmodHostApi h=stat_setup(&f,1,8);if(mode)f.map_fail_on=n;else f.fail_on=n;
  StatsProbeResult r;stats_probe(&h,&f.initial_identity,&r);
  // Before the injected failure, all reads succeeded, so its owning position is exact.
- const int shared=n<=24||n>=97;
+ const int shared=n<=24||n>=119;
  CHECK(r.shared_identity_valid==!shared);
  if(shared)check_all(&r,0);
- else{const unsigned field=((n-25)%36)/9;for(unsigned i=0;i<4;i++)CHECK(r.fields[i].available==(i!=field));}
- CHECK(r.reads<=120&&r.bytes<=1434&&f.writes==0);release(&f);
+ else if((n>=25&&n<=60)||(n>=72&&n<=107)){const unsigned field=(n>=72?n-72:n-25)/9;for(unsigned i=0;i<4;i++)CHECK(r.fields[i].available==(i!=field));}
+ else check_all(&r,1);
+ CHECK(r.reads<=STATS_MAX_READS&&r.bytes<=STATS_MAX_BYTES&&f.writes==0);release(&f);
 }}
 static void cache_limits_dirty(void){
- Fixture f;EdenDsmodHostApi h=stat_setup(&f,1,9);StatsProbeResult r;stats_probe(&h,&f.initial_identity,&r);CHECK(r.shared_identity_valid);check_all(&r,0);CHECK(r.reads==120&&r.bytes==1434);release(&f);
+ Fixture f;EdenDsmodHostApi h=stat_setup(&f,1,9);StatsProbeResult r;stats_probe(&h,&f.initial_identity,&r);CHECK(r.shared_identity_valid);check_all(&r,0);CHECK(r.reads==142&&r.bytes==1610);release(&f);
  for(unsigned mode=0;mode<2;mode++){h=stat_setup(&f,mode,1);put(&f,GROUP+4,mode?6:2,1);stats_probe(&h,&f.initial_identity,&r);CHECK(r.shared_identity_valid);check_all(&r,0);CHECK(r.reads==44&&r.bytes==314);for(unsigned i=0;i<4;i++)CHECK(strstr(r.fields[i].reason,"dirty"));release(&f);}
 }
 // Catches dropped ACD generation/range/alignment guards and accepting invalid hosts.
@@ -78,7 +79,7 @@ static void invalid_shared_states(void){
  {ACD_POOL+0x100,2,4},{ACD_POOL+0x168,17,4},{ACD_POOL+0x120,0,8},{ACD_TABLE,UINT64_MAX-7,8},
  {ACD,ACD_ID+0x10000,4},{ACD+0x168,0,8},{ACD+0x168,GROUP+4,8},{GROUP+0x10,0,8},
  {OWNER+0x10,0,8},{OWNER+0x10,OWNER+0x1E,8}};
- for(unsigned c=0;c<sizeof cases/sizeof cases[0];c++){Fixture f;EdenDsmodHostApi h=stat_setup(&f,1,1);put(&f,cases[c].address,cases[c].value,cases[c].size);StatsProbeResult r;stats_probe(&h,&f.initial_identity,&r);CHECK(!r.shared_identity_valid);check_all(&r,0);CHECK(r.reads<=120&&r.bytes<=1434&&!f.writes);release(&f);}
+ for(unsigned c=0;c<sizeof cases/sizeof cases[0];c++){Fixture f;EdenDsmodHostApi h=stat_setup(&f,1,1);put(&f,cases[c].address,cases[c].value,cases[c].size);StatsProbeResult r;stats_probe(&h,&f.initial_identity,&r);CHECK(!r.shared_identity_valid);check_all(&r,0);CHECK(r.reads<=STATS_MAX_READS&&r.bytes<=STATS_MAX_BYTES&&!f.writes);release(&f);}
  Fixture f;EdenDsmodHostApi h=stat_setup(&f,1,1);StatsProbeResult r;
  stats_probe(NULL,&f.initial_identity,&r);CHECK(!r.shared_identity_valid&&!f.calls);stats_probe(&h,NULL,&r);CHECK(!r.shared_identity_valid&&!f.calls);
  h.main_size=UINT64_MAX;stats_probe(&h,&f.initial_identity,&r);CHECK(!r.shared_identity_valid&&!f.calls);release(&f);
@@ -108,7 +109,7 @@ static EdenDsmodBool late_failure_read(void*p,uint64_t a,void*out,size_t n){
 }
 static void late_field_failure_then_identity(void){for(unsigned field=0;field<4;field++)for(unsigned where=0;where<2;where++)for(unsigned kind=0;kind<4;kind++){
  Fixture f;EdenDsmodHostApi h=stat_setup(&f,1,1);memset(&late,0,sizeof late);late.target=where?node_address(field,0):OWNER+0x1C+8*shared_index[field];late.kind=kind;h.read_memory=late_failure_read;
- StatsProbeResult r;stats_probe(&h,&f.initial_identity,&r);CHECK(late.triggered);CHECK(!r.shared_identity_valid);check_all(&r,0);if(kind==3)CHECK(late.identity_failed);CHECK(r.reads<=120&&r.bytes<=1434&&!f.writes);release(&f);
+ StatsProbeResult r;stats_probe(&h,&f.initial_identity,&r);CHECK(late.triggered);CHECK(!r.shared_identity_valid);check_all(&r,0);if(kind==3)CHECK(late.identity_failed);CHECK(r.reads<=STATS_MAX_READS&&r.bytes<=STATS_MAX_BYTES&&!f.writes);release(&f);
 }}
 // Hand-derived expected text catches fraction-versus-percent mistakes, ties-away rounding,
 // percent-before-precision, fake zeros, and undefined/out-of-range integer conversion.
@@ -117,10 +118,81 @@ static void formatting(void){
  {0,1.25f,"1.25"},{1,0.125f,"12.50%"},{1,0.0f,"0.00%"},{2,102.5f,"102"},{2,103.5f,"104"},{2,-2.5f,"-2"},{2,0,"0"},
  {3,1.25f,"+25.00%"},{3,1.5f,"+50.0%"},{3,1.0f,"+0%"},{3,0.875f,"-12%"}};
  char text[128];for(unsigned i=0;i<sizeof cases/sizeof cases[0];i++){CHECK(stats_format(cases[i].field,cases[i].input,text,sizeof text));CHECK(!strcmp(text,cases[i].want));}
- CHECK(!stats_format(0,NAN,text,sizeof text));CHECK(!stats_format(1,FLT_MAX,text,sizeof text));CHECK(!stats_format(2,8388608.0f,text,sizeof text));CHECK(!stats_format(3,FLT_MAX,text,sizeof text));CHECK(!stats_format(4,1,text,sizeof text));CHECK(!stats_format(0,1,text,1));
+ CHECK(!stats_format(0,NAN,text,sizeof text));CHECK(!stats_format(1,FLT_MAX,text,sizeof text));CHECK(!stats_format(2,8388608.0f,text,sizeof text));CHECK(!stats_format(3,FLT_MAX,text,sizeof text));CHECK(!stats_format(STATS_COUNT,1,text,sizeof text));CHECK(!stats_format(0,1,text,1));
  Fixture f;EdenDsmodHostApi h=stat_setup(&f,1,1);put32(&f,node_address(1,0)+12,bits(FLT_MAX));StatsProbeResult r;stats_probe(&h,&f.initial_identity,&r);CHECK(r.shared_identity_valid&&!r.fields[1].available);CHECK(r.fields[0].available&&r.fields[2].available&&r.fields[3].available);release(&f);
 }
-static int stat_suite(void){base_reader_suite();late_field_failure_then_identity();stats_valid();field_independence();failure_positions();cache_limits_dirty();invalid_shared_states();field_failure_then_identity_change();snapshot_changes();formatting();puts("PASS stats synthetic route/cache/field isolation/formatting suite");return 0;}
+// Independent test cases exercise the menu formula, not an unverified gameplay estimate.
+#define DEFINITIONS (MAIN+UINT64_C(0x191EAD8))
+static const uint32_t extended_keys[12]={0xFFFFF00E,0xFFFFF00F,0xFFFFF010,0xFFFFF011,0xFFFFF0FC,0xFFFFF0FD,0xFFFFF4B7,0xFFFFF0FF,0xFFFFF100,0xFFFFF0FE,0xFFFFF094,0x000032E3};
+static const float extended_values[12]={13,9,9,11,0.2f,0.3f,0.1f,0.2f,0.6f,0.05f,0,0.175f};
+static uint64_t extended_bucket(unsigned input){const uint32_t key=extended_keys[input-4];return OWNER+0x1C+8*((key^(key>>12))&0x1FFu);}
+static EdenDsmodHostApi extended_setup(Fixture*f){
+ EdenDsmodHostApi h=stat_setup(f,1,1);
+ for(unsigned i=4;i<16;i++){uint64_t a=node_address(i,0);put64(f,extended_bucket(i),a);put64(f,a,0);put32(f,a+8,extended_keys[i-4]);put32(f,a+12,i==14?3:bits(extended_values[i-4]));}
+ return h;
+}
+static void extended_fields(void){
+ Fixture f;EdenDsmodHostApi h=extended_setup(&f);StatsProbeResult r;stats_probe(&h,&f.initial_identity,&r);
+ CHECK(r.shared_identity_valid);for(unsigned i=0;i<STATS_COUNT;i++)CHECK(r.fields[i].available);
+ CHECK(r.fields[STATS_STRENGTH].raw==13&&r.fields[STATS_DEXTERITY].raw==9&&r.fields[STATS_INTELLIGENCE].raw==9&&r.fields[STATS_VITALITY].raw==11);
+ CHECK(fabsf(r.fields[STATS_CRIT_CHANCE].raw-0.65f)<0.000001f&&r.fields[STATS_RESOURCE_COST].raw==0.175f);
+ char text[40];CHECK(stats_format(STATS_CRIT_CHANCE,r.fields[STATS_CRIT_CHANCE].raw,text,sizeof text)&&!strcmp(text,"65.00%"));
+ CHECK(stats_format(STATS_RESOURCE_COST,r.fields[STATS_RESOURCE_COST].raw,text,sizeof text)&&!strcmp(text,"17.50%"));
+ CHECK(stats_format(STATS_STRENGTH,13.5f,text,sizeof text)&&!strcmp(text,"14"));
+ CHECK(!f.writes&&r.reads<=STATS_MAX_READS&&r.bytes<=STATS_MAX_BYTES);release(&f);
+}
+static void extended_independence(void){
+ for(unsigned field=4;field<16;field++){Fixture f;EdenDsmodHostApi h=extended_setup(&f);put32(&f,node_address(field,0)+12,field==14?9:UINT32_C(0x7FC00000));StatsProbeResult r;stats_probe(&h,&f.initial_identity,&r);CHECK(r.shared_identity_valid);
+  for(unsigned out=0;out<STATS_COUNT;out++){const unsigned affected=field<8?field:field<14?STATS_CRIT_CHANCE:STATS_RESOURCE_COST;CHECK(r.fields[out].available==(out!=affected));}release(&f);}
+ // A different valid primary resource must not retain the old resource's cost value.
+ Fixture f;EdenDsmodHostApi h=extended_setup(&f);put32(&f,node_address(14,0)+12,4);StatsProbeResult r;stats_probe(&h,&f.initial_identity,&r);CHECK(r.shared_identity_valid&&!r.fields[STATS_RESOURCE_COST].available&&r.fields[STATS_CRIT_CHANCE].available);release(&f);
+}
+static void extended_defaults_and_budget(void){
+ Fixture f;EdenDsmodHostApi h=extended_setup(&f);h.main_size=0x1AA6000;f.regions[16]=(Region){DEFINITIONS,0x14000,calloc(1,0x14000)};CHECK(f.regions[16].bytes);
+ for(unsigned i=0;i<16;i++){
+  const uint32_t key=i<4?keys[i]:extended_keys[i-4];const uint32_t value=i<4?bits(values[i]):i==14?3:bits(extended_values[i-4]);
+  const int defaults=i==1||(i>=8&&i<=13)||i==15;
+  for(unsigned j=0;j<8;j++){uint64_t a=node_address(i,j);put64(&f,a,j<7?node_address(i,j+1):0);put32(&f,a+8,j==7&&!defaults?key:0x123000+j);put32(&f,a+12,value);}
+  if(defaults){put32(&f,DEFINITIONS+64*(key&0xFFF),key&0xFFF);put32(&f,DEFINITIONS+64*(key&0xFFF)+4,value);}
+ }
+ StatsProbeResult r;stats_probe(&h,&f.initial_identity,&r);CHECK(r.shared_identity_valid);for(unsigned i=0;i<STATS_COUNT;i++)CHECK(r.fields[i].available);
+ CHECK(fabsf(r.fields[STATS_CRIT_CHANCE].raw-0.65f)<0.000001f&&r.fields[STATS_RESOURCE_COST].raw==0.175f);
+ CHECK(r.reads==STATS_MAX_READS&&r.bytes==STATS_MAX_BYTES&&!f.writes);
+ put32(&f,DEFINITIONS+64*0x4B7,0x4B6);stats_probe(&h,&f.initial_identity,&r);CHECK(r.shared_identity_valid&&!r.fields[STATS_CRIT_CHANCE].available&&r.fields[STATS_RESOURCE_COST].available);
+ release(&f);
+}
+static struct {uint64_t target;unsigned seen,kind;} extended_change;
+static EdenDsmodBool extended_changed_read(void*p,uint64_t a,void*out,size_t n){
+ Fixture*f=p;
+ if(a==extended_change.target&&++extended_change.seen==2){
+  if(extended_change.kind==0)f->fail_on=f->calls+1;
+  else put32(f,a+12,extended_change.kind==2?4:bits(0.875f));
+ }
+ return read_mem(p,a,out,n);
+}
+static void extended_snapshot_safety(void){
+ for(unsigned input=4;input<16;input++)for(unsigned kind=0;kind<2;kind++){
+  Fixture f;EdenDsmodHostApi h=extended_setup(&f);memset(&extended_change,0,sizeof extended_change);
+  extended_change.target=node_address(input,0);extended_change.kind=kind&&input==14?2:kind;h.read_memory=extended_changed_read;
+  StatsProbeResult r;stats_probe(&h,&f.initial_identity,&r);CHECK(r.shared_identity_valid&&extended_change.seen==2);
+  const unsigned affected=input<8?input:input<14?STATS_CRIT_CHANCE:STATS_RESOURCE_COST;
+  for(unsigned output=0;output<STATS_COUNT;output++)CHECK(r.fields[output].available==(output!=affected));release(&f);
+ }
+ for(unsigned input=4;input<16;input++)for(unsigned kind=0;kind<4;kind++){
+  Fixture f;EdenDsmodHostApi h=extended_setup(&f);memset(&late,0,sizeof late);late.target=node_address(input,0);late.kind=kind;h.read_memory=late_failure_read;
+  StatsProbeResult r;stats_probe(&h,&f.initial_identity,&r);CHECK(late.triggered&&!r.shared_identity_valid);
+  for(unsigned output=0;output<STATS_COUNT;output++)CHECK(!r.fields[output].available);if(kind==3)CHECK(late.identity_failed);release(&f);
+ }
+}
+static void critical_chance_limits(void){
+ Fixture f;EdenDsmodHostApi h=extended_setup(&f);StatsProbeResult r;
+ put32(&f,node_address(13,0)+12,bits(-2.0f));stats_probe(&h,&f.initial_identity,&r);CHECK(r.fields[STATS_CRIT_CHANCE].available&&r.fields[STATS_CRIT_CHANCE].raw==0);
+ put32(&f,node_address(13,0)+12,bits(2.0f));stats_probe(&h,&f.initial_identity,&r);CHECK(r.fields[STATS_CRIT_CHANCE].available&&r.fields[STATS_CRIT_CHANCE].raw==1);
+ put32(&f,node_address(8,0)+12,bits(FLT_MAX));put32(&f,node_address(9,0)+12,bits(FLT_MAX));stats_probe(&h,&f.initial_identity,&r);CHECK(r.shared_identity_valid&&!r.fields[STATS_CRIT_CHANCE].available&&r.fields[STATS_RESOURCE_COST].available);
+ release(&f);
+}
+static void extended_suite(void){extended_fields();extended_independence();extended_defaults_and_budget();extended_snapshot_safety();critical_chance_limits();}
+static int stat_suite(void){base_reader_suite();extended_suite();late_field_failure_then_identity();stats_valid();field_independence();failure_positions();cache_limits_dirty();invalid_shared_states();field_failure_then_identity_change();snapshot_changes();formatting();puts("PASS stats synthetic route/cache/field isolation/formatting suite");return 0;}
 #ifndef STATS_EMBED
 int main(void){return stat_suite();}
 #endif

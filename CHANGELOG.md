@@ -1,5 +1,18 @@
 # Changelog
 
+## 0.2.0-dev — expanded live preview — 2026-10-07
+
+- Added class, Paragon, primary attributes, critical chance and resource cost reduction.
+- Added thirteen equipment slots with read-only base-name inspection.
+- Added exploration coverage, supported numeric terrain, a player marker, zoom, recentering and one local pin. Pins clear on world changes.
+- Expanded the portrait-free gold/black interface to Character, Equipment, Skills and Map. Added original equipment icons and a larger bitmap-font atlas.
+- Added bounded equipment/map readers, repeated ownership/world checks, thread-safe map snapshots and synthetic failure/renderer tests.
+- Kept unsupported values unavailable. Full item rolls/comparison, affixed names, rune names, pylons/exits and Greater Rift timing/progress remain unimplemented.
+
+This is an experimental preview. See [validation](docs/validation.md) for the
+exact artifact, observed hardware behavior and remaining coverage. Older release
+measurements below do not describe the new readers.
+
 ## Validation follow-up — 2026-10-07
 
 No package or code change. On the published `0.1.2-rc.1` binary, a level-2

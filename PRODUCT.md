@@ -21,16 +21,17 @@ There are two deliberately separate outputs:
 
 - **0.1.1-dev static preview:** Character, Combat and unavailable Map pages;
   built by `tools/build.py`, with no live reader or supported-build declaration.
-- **0.1.2-rc.1 native test candidate:** Character and Skills pages with live level,
-  four statistics and six equipped skill slots, built by `native/build.py`.
-  The reader and toolchain were recovered, the binary was reproduced, and this
-  redesigned candidate has been installed on the Thor.
+- **0.2.0-dev native live preview:** Character, Equipment, Skills and Map views,
+  built by `native/build.py`. It adds class/Paragon, primary attributes, six
+  combat statistics, equipment slots/base names and a numeric exploration map.
+  This is an experimental exact-build package, not broad compatibility.
 
 Use the real `.dsmod.zip` format, runtime 18, with bounded read-only acquisition.
 The native reader accepts one complete executable build ID; that gate is not a
 claim of complete compatibility. Missing or unsupported values remain unavailable.
-Map data, equipment comparison, rune names, passives and buff timers are not
-implemented. Sample values belong only in labeled offline design renders.
+Equipment rolls/comparison, full affixed item names, rune names, passives, buff
+timers and Greater Rift/pylon/exit annotations are not implemented. Map terrain
+can be partial for unsupported scenes and excludes dynamic doors/actors. Sample values belong only in labeled offline design renders.
 
 ## Brand commitments
 
@@ -41,12 +42,11 @@ navigation graphics must be original or redistributable.
 
 ## Evidence on hand
 
-Fresh 2026-10-07 candidate observations include native module/asset loading,
-Barbarian level and armor matching menus, two live skill names, page navigation,
-and clearing values after returning to the game menu. The owner used physical
-controls to enter gameplay and open menus. These are bounded observations;
-[validation](docs/validation.md) tracks remaining lifecycle, field, controller
-and performance evidence. Offline renders are design evidence, not device proof.
+Dated hardware observations, exact artifact hashes and limits are maintained in
+[validation](docs/validation.md). The earlier 0.1.2 candidate established narrow
+Barbarian/Wizard field and lifecycle evidence. New equipment/terrain readers
+require their own evidence; old observations never stand in for a new feature.
+Offline renders are design evidence, not device proof.
 
 ## Principles
 

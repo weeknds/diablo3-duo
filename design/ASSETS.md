@@ -29,3 +29,12 @@ assets. This is a desktop approximation of Eden's renderer, not a Thor capture.
 Its optional `--sample` mode renders illustrative labels; `--stress` checks longer
 names and values. Both write visibly labeled offline PNGs without changing the
 manifest or reading game data.
+
+## Native 0.2.0 assets
+
+`native/artwork.py` regenerates the native preview's original equipment/page
+icons, Cinzel headings and 96 px ASCII font atlas. `native/ASSETS.json` pins every
+asset in `native/assets/`. Source metadata is embedded in each raster. The glyph
+shapes are drawn in code; none are game-texture crops or character illustrations.
+The native package carries its own OFL text and attribution notice. Ordinary
+builds use pinned files and need no image-generation service or Pillow install.

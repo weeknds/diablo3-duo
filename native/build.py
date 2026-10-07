@@ -17,16 +17,20 @@ ROOT = Path(__file__).resolve().parent
 REPO = ROOT.parent
 NDK_REVISION = '28.2.13676358'
 SOURCES = ('module.c', 'player_probe.c', 'skills_probe.c', 'stats_probe.c',
-           'details_probe.c', 'names_probe.c', 'duo_font.c')
+           'details_probe.c', 'names_probe.c', 'duo_font.c', 'equipment_probe.c',
+           'map_probe.c', 'map_view.c', 'equipment_inspect.c', 'nav_probe.c')
 HEADERS = ('details_probe.h', 'duo_font.h', 'health_probe.h', 'name_layout.h',
-           'names_probe.h', 'player_probe.h', 'probe_internal.h', 'skills_probe.h', 'stats_probe.h')
+           'names_probe.h', 'player_probe.h', 'probe_internal.h', 'skills_probe.h', 'stats_probe.h',
+           'equipment_probe.h', 'map_probe.h', 'map_view.h', 'equipment_inspect.h', 'nav_probe.h')
 TESTS = ('test_cdr_default.c', 'test_font_decoder.c', 'test_module.c', 'test_names.c',
          'test_player_probe.c', 'test_skills.c', 'test_stats_probe.c',
-         'skills_frozen/test_player_probe.c', 'skills_frozen/test_skills_probe.c')
+         'skills_frozen/test_player_probe.c', 'skills_frozen/test_skills_probe.c',
+         'test_equipment.c', 'test_map.c', 'test_map_view.c', 'test_equipment_inspect.c', 'test_nav.c')
 VENDOR = ('LICENSE.txt', 'UPSTREAM.json', 'dsmod_module_abi.h', 'dsmod_module_extensions.h')
 PINNED_INPUTS = ({'src/' + p for p in SOURCES + HEADERS}
                  | {'tests/' + p for p in TESTS} | {'vendor/' + p for p in VENDOR})
-SOURCE_FILES = PINNED_INPUTS | {'SOURCES.json', 'build.py', 'live_ui.py', 'test.py', 'README.md'}
+SOURCE_FILES = PINNED_INPUTS | {'SOURCES.json', 'build.py', 'live_ui.py', 'test.py', 'README.md',
+                               'artwork.py', 'ASSETS.json'}
 
 
 def digest(path):
@@ -64,7 +68,14 @@ def validate_tree(root, allowed, *, exact=False, bytecode=False):
 
 
 def validate_sources(root=ROOT):
-    validate_tree(root, SOURCE_FILES, exact=True, bytecode=True)
+    assets = json.loads((root / 'ASSETS.json').read_text())
+    if not assets or any('/' in name or '\\' in name or Path(name).suffix not in ('.png','.mfnt','.txt')
+                         for name in assets):
+        raise ValueError('Invalid native asset inventory')
+    validate_tree(root, SOURCE_FILES | {'assets/' + name for name in assets}, exact=True, bytecode=True)
+    for name, expected in assets.items():
+        if digest(root / 'assets' / name) != expected:
+            raise ValueError('Native asset hash mismatch: ' + name)
     pins = json.loads((root / 'SOURCES.json').read_text())
     if set(pins) != PINNED_INPUTS:
         raise ValueError('Native source inventory differs from the reviewed source set')
@@ -90,12 +101,15 @@ def stage_package(module_path, stage):
     no_symlink(module_path)
     if digest(module_path) != adapter.MODULE_HASH:
         raise ValueError('Native module differs from the reproduced reviewed build')
-    static = load_module('duo_static_validation', REPO / 'tools/build.py')
-    static.validate_development(REPO)
     manifest = adapter.make_manifest()
     assets = {manifest[k][5:] for k in ('font', 'font_atlas')}
     assets |= {w['src'][5:] for p in manifest['pages'] for w in p['widgets'] if w['type'] == 'image'}
+    assets |= {src[5:] for p in manifest['pages'] for w in p['widgets'] for src in w.get('src_names', [])}
     assets |= {'assets/OFL.txt', 'assets/NOTICE.txt'}
+    pins = json.loads((ROOT / 'ASSETS.json').read_text())
+    for relative in assets:
+        if not relative.startswith('assets/') or relative[7:] not in pins or digest(ROOT / relative) != pins[relative[7:]]:
+            raise ValueError('Unpinned native asset: ' + relative)
     allowed = {'dualscreen/' + p for p in assets | {adapter.MODULE, 'manifest.json', 'licenses/GPL-3.0.txt'}}
     allowed.add('package.json')
     validate_tree(stage, allowed)
@@ -103,7 +117,7 @@ def stage_package(module_path, stage):
     for relative in sorted(assets):
         target = dual / relative
         target.parent.mkdir(parents=True, exist_ok=True)
-        shutil.copyfile(REPO / 'package/dualscreen' / relative, target)
+        shutil.copyfile(ROOT / relative, target)
     target = dual / adapter.MODULE
     target.parent.mkdir(parents=True, exist_ok=True)
     shutil.copyfile(module_path, target)

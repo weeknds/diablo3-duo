@@ -1,37 +1,25 @@
-Diablo III Duo — live test candidate and static design preview
+Diablo III Duo — experimental live preview
 
-The native 0.1.2-rc.1 candidate has been installed on the AYN Thor. Its
-Character and Skills pages read character level, four statistics and six
-skill slots for one exact executable build. Fresh Barbarian level, armor and
-skill-name observations match the game's menus. Missing data stays unavailable.
-This is a test candidate, not a finished or broadly supported release.
-
-The observed setup is Android 13, Eden Duo 1.1.0/runtime 18 and Diablo III
-2.7.7.92380. Current evidence and remaining checks are in docs/validation.md.
-Lifecycle, broader field coverage and measured performance remain separate
-release requirements; an installed package alone does not satisfy them.
+The native 0.2.0-dev package provides Character, Equipment, Skills and Map
+views on the Thor's lower screen, with no character imagery. It reads one
+exact game build; it never writes game memory or equips items.
 
 Start with README.md, docs/installation.md and docs/compatibility.md.
-See docs/reader.md for the bounded read-only reader and native/README.md for
-its reproducible build. Game files are not needed to build either package.
+Current device observations and limits are in docs/validation.md and
+unfinished work is in docs/next-step.md. Reader internals are in docs/reader.md.
 
-Static 0.1.1-dev preview (Character, Combat and unavailable Map pages):
+Native package:
+  python3 native/test.py
+  python3 native/build.py --ndk /path/to/android-ndk-r28c --output dist/native-0.2.0
 
-  python3 -m unittest discover -s tests -v
+The native build needs an explicit macOS NDK r28c. Tests need Clang; Python
+3.10+ is required. No game files are needed for public builds or tests.
+
+Older static 0.1.1-dev package, with no live reader:
   python3 tools/build.py --check
   python3 tools/build.py
 
-Output: dist/01001B300B9BE000.dsmod.zip. It has no live reader.
-
-Native 0.1.2-rc.1 test candidate (Character and Skills pages):
-
-  python3 native/test.py
-  python3 native/build.py --ndk /absolute/path/to/android-ndk-r28c
-
-Output: dist/live/01001B300B9BE000.dsmod.zip. Native builds require the explicit
-macOS NDK r28c; sanitizer tests require clang. Python 3.10 or later is required.
-The two ZIPs have the same filename: choose the correct output directory.
-
-Use a separate test profile/save. Keep game archives, keys, firmware, saves,
-extracted art and captures under ignored private/; never upload them to GitHub.
-Read docs/next-step.md before device work and docs/releasing.md before publication.
+Both outputs have the same .dsmod.zip filename in different directories.
+Choose the native release for live features. Use a separate test profile
+and preserve saves. Never publish game archives, keys, firmware, saves,
+extracted art, raw diagnostic logs or private device captures.
