@@ -8,6 +8,10 @@ it is not a broad compatibility or finished-release claim. The interface uses
 warm black, antique gold, serif headings and clear touch controls, without
 character artwork.
 
+The local **0.2.2-dev candidate** adds explored quest/location markers, target
+directions and nearby goblin alerts. It is prepared offline and has not been
+installed or validated on the Thor. See [marker behavior and limits](docs/map-markers.md).
+
 ## Features
 
 - **Character:** class, level, Paragon, Strength, Dexterity, Intelligence,
@@ -20,10 +24,12 @@ character artwork.
   player following, touch pan/pinch, zoom controls and one local location pin. Changing worlds clears the pin.
 
 Missing or rejected data remains unavailable. Terrain is static ground coverage;
-unsupported scenes can be omitted. Doors, enemies, automatic pylon/exit labels,
+unsupported scenes can be omitted. Doors, general enemy markers, automatic pylon labels,
 Greater Rift progress/timing, item rolls/comparison, full affixed item names,
 sheet damage/toughness/recovery and critical damage are not implemented.
 The reference designs illustrate a broader goal than the current verified reader.
+Quest, entrance/exit, waypoint and goblin markers belong to the newer local
+candidate; the published 0.2.1 package does not contain them.
 
 See [current device evidence and limits](docs/next-step.md),
 [compatibility](docs/compatibility.md) and [installation](docs/installation.md).

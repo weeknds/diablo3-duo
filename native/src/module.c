@@ -4,6 +4,8 @@
 #include "equipment_probe.h"
 #include "equipment_inspect.h"
 #include "map_view.h"
+#include "markers_view.h"
+#include "goblins_probe.h"
 #include "dsmod_module_extensions.h"
 #include <pthread.h>
 #include <inttypes.h>
@@ -23,6 +25,8 @@ typedef struct ModuleState {
     EquipmentInspectResult inspection;
     int selected_slot;
     MapView map, displayed, pending, previous;
+    MarkersView markers;
+    int markers_partial;
     uint64_t pending_observed;
     int pending_loaded, reset_pending;
     pthread_mutex_t map_lock;
@@ -46,7 +50,7 @@ static void *create(const EdenDsmodHostApi *h, const char *config) {
     ModuleState *state=calloc(1,sizeof *state);
     if (!state) return NULL;
     if (pthread_mutex_init(&state->map_lock,NULL)) { free(state); return NULL; }
-    map_view_clear(&state->map); state->selected_slot=-1;
+    map_view_clear(&state->map);markers_view_clear(&state->markers);state->selected_slot=-1;
     return state;
 }
 
@@ -57,6 +61,8 @@ static void clear_cached(ModuleState *state) {
     if (state->map.data.available || state->map.pinned) map_view_clear(&state->map);
     state->displayed=(MapView){0};state->pending=(MapView){0};state->previous=(MapView){0};
     state->pending_observed=0;state->pending_loaded=0;
+    markers_view_clear(&state->markers);
+    state->markers_partial=0;
     pthread_mutex_unlock(&state->map_lock);
     state->reset_pending=1;
     state->cached=0;
@@ -84,9 +90,26 @@ static void sample(void *instance, const EdenDsmodHostApi *h) {
                               &state->equipment.slots[state->selected_slot],&state->inspection);
         MapProbeResult map={0};
         map_probe(h,&result.level.identity,&map);
+        MarkersProbeResult locations={0},goblins={0},markers={0};
+        if(map.available&&map.exploration_available) {
+            markers_probe(h,&result.level.identity,&map,&locations);
+            goblins_probe(h,&result.level.identity,&map,&goblins);
+            markers.world_id=map.world_id;
+            const MarkersProbeResult *batches[2]={&goblins,&locations};
+            // Moving goblins take priority if the bounded marker set is full.
+            // A failure in one optional route must not erase the other route.
+            for(unsigned b=0;b<2;b++)if(batches[b]->available&&batches[b]->shared_identity_valid&&
+                batches[b]->world_id==map.world_id&&batches[b]->count<=MARKERS_MAX_ITEMS) {
+                markers.available=markers.shared_identity_valid=1;
+                for(unsigned i=0;i<batches[b]->count&&markers.count<MARKERS_MAX_ITEMS;i++)
+                    markers.items[markers.count++]=batches[b]->items[i];
+            }
+        }
         pthread_mutex_lock(&state->map_lock);
         const int new_world=!state->map.data.available||state->map.data.world_id!=map.world_id;
         map_view_update(&state->map,&map);
+        markers_view_update(&state->markers,&markers,&map,now);
+        state->markers_partial=!locations.available||!goblins.available;
         if(new_world)state->reset_pending=1;
         pthread_mutex_unlock(&state->map_lock);
         if (map.available && (new_world||now>=state->next_navigation_refresh)) {
@@ -113,6 +136,8 @@ static void sample(void *instance, const EdenDsmodHostApi *h) {
             pthread_mutex_lock(&state->map_lock);
             if (!current || world!=state->map.data.world_id) {
                 map_view_clear(&state->map);
+                markers_view_clear(&state->markers);
+                state->markers_partial=0;
                 state->reset_pending=1;
                 state->next_refresh=0;
                 state->next_navigation_refresh=0;
@@ -226,7 +251,11 @@ static void sample(void *instance, const EdenDsmodHostApi *h) {
     const int ready=available&&view->data.available&&state->displayed.data.available;
     h->publish_i64(h->userdata,"map.available",available&&view->data.available);
     h->publish_i64(h->userdata,"map.ready",ready);
+    h->publish_i64(h->userdata,"map.action_pending",state->reset_pending||state->markers.selection_pending);
     h->publish_i64(h->userdata,"map.reset_pending",state->reset_pending);state->reset_pending=0;
+    h->publish_i64(h->userdata,"map.selection_pending",state->markers.selection_pending);
+    h->publish_i64(h->userdata,"map.poi.selected_slot",state->markers.selected);
+    state->markers.selection_pending=0;
     h->publish_i64(h->userdata,"map.pinned",ready&&view->pinned);
     char map_key[80],pending_key[80];
     snprintf(map_key,sizeof map_key,"module:exploration:%" PRIu64,state->displayed.revision);
@@ -235,8 +264,9 @@ static void sample(void *instance, const EdenDsmodHostApi *h) {
     h->publish_text(h->userdata,"map.image",map_key);
     h->publish_text(h->userdata,"map.pending",pending_key);
     h->publish_text(h->userdata,"map.pin.image","file:assets/icon-map-pin.png");
-    MapProjection projection;
-    if (ready&&map_view_projection(&state->displayed,&projection)) {
+    MapProjection projection={0};
+    const int projected=ready&&map_view_projection(&state->displayed,&projection);
+    if (projected) {
         float x,y,px,py;
         map_view_point(&projection,view->data.x,view->data.y,&x,&y);
         map_view_point(&projection,view->pin_x,view->pin_y,&px,&py);
@@ -249,14 +279,45 @@ static void sample(void *instance, const EdenDsmodHostApi *h) {
         h->publish_f64(h->userdata,"map.view.x0",cx-half);h->publish_f64(h->userdata,"map.view.x1",cx+half);
         h->publish_f64(h->userdata,"map.view.y0",cy-height);h->publish_f64(h->userdata,"map.view.y1",cy+height);
     }
-    h->publish_text(h->userdata,"map.description",view->data.available?
-        (terrain_available?"Drag to explore  /  Pinch to zoom  /  White marker: you":
-         view->data.exploration_available?"Explored areas  /  White marker: you  /  Gold marker: your pin":
+    for(unsigned i=0;i<MARKERS_MAX_ITEMS;i++) {
+        const MarkerSlot *slot=&state->markers.slots[i];
+        const int visible=projected&&slot->active;
+        char key[48];
+        snprintf(key,sizeof key,"map.poi.%u.kind",i);
+        h->publish_i64(h->userdata,key,visible?(int)slot->marker.kind:0);
+        if(visible) {
+            float x,y;map_view_point(&projection,slot->marker.x,slot->marker.y,&x,&y);
+            snprintf(key,sizeof key,"map.poi.%u.x",i);h->publish_f64(h->userdata,key,x*MAP_COORD_SCALE);
+            snprintf(key,sizeof key,"map.poi.%u.y",i);h->publish_f64(h->userdata,key,(MAP_IMAGE_HEIGHT-y)*MAP_COORD_SCALE);
+            snprintf(key,sizeof key,"map.poi.%u.icon",i);h->publish_text(h->userdata,key,marker_icon(slot->marker.kind));
+        }
+    }
+    char focus[128];double direction=0;
+    const int focused=projected?markers_view_focus(&state->markers,view->data.x,view->data.y,
+                                                   focus,sizeof focus,&direction):0;
+    h->publish_i64(h->userdata,"map.focus.direction",focused==1);
+    h->publish_f64(h->userdata,"map.focus.angle",direction);
+    h->publish_text(h->userdata,"map.description",focused?focus:view->data.available?
+        (terrain_available?"Tap a marker to identify it  /  Drag or pinch to explore":
+         view->data.exploration_available?"Explored areas  /  White marker: you  /  Gold pin: saved location":
          "Your position is available. Explored areas are unavailable."):
         "Enter the world to begin exploring.");
     h->publish_text(h->userdata,"map.waiting",view->data.available?
                     "Drawing explored terrain...":"Exploration data unavailable");
-    h->publish_text(h->userdata,"map.status",map_view_status(view));
+    char map_status[160];
+    const char *map_note=map_view_status(view);
+    if(ready&&markers_view_alert(&state->markers,now))map_note="Treasure goblin nearby. Look for the green loot marker.";
+    else if(terrain_available&&!view->navigation.partial&&!view->pinned) {
+        if(!state->markers.available)map_note="Terrain ready. Map markers are temporarily unavailable.";
+        else if(state->markers_partial)map_note="Some map markers are unavailable. Showing the locations that could be read.";
+        else if(!state->markers.count)map_note="No known markers in explored areas. Keep exploring.";
+        else {
+            snprintf(map_status,sizeof map_status,"%u known %s  /  Next marker cycles through targets, including offscreen ones.",
+                     state->markers.count,state->markers.count==1?"location":"locations");
+            map_note=map_status;
+        }
+    }
+    h->publish_text(h->userdata,"map.status",map_note);
     pthread_mutex_unlock(&state->map_lock);
     for(unsigned i=0;i<SKILL_SLOT_COUNT;i++) {
         char key[40];
@@ -290,7 +351,10 @@ static EdenDsmodBool action(void *instance,const char *name,int64_t argument) {
         return EDEN_DSMOD_TRUE;
     }
     pthread_mutex_lock(&state->map_lock);
-    const int accepted=map_view_action(&state->map,name);
+    int accepted=0;
+    if(state->map.data.available&&state->displayed.data.available)
+        accepted=markers_view_action(&state->markers,name,argument);
+    if(!accepted)accepted=map_view_action(&state->map,name);
     if(accepted&&(!strcmp(name,"map_zoom_in")||!strcmp(name,"map_zoom_out")))state->reset_pending=1;
     pthread_mutex_unlock(&state->map_lock);
     return accepted?EDEN_DSMOD_TRUE:EDEN_DSMOD_FALSE;
@@ -361,7 +425,7 @@ const EdenDsmodModuleExtensions *eden_dsmod_get_extensions(uint32_t version,uint
 static const EdenDsmodModuleApi module = {
     .abi_version=EDEN_DSMOD_MODULE_ABI_VERSION, .struct_size=sizeof(EdenDsmodModuleApi),
     .abi_hash=EDEN_DSMOD_MODULE_ABI_HASH, .title_id=TITLE_ID,
-    .name="Diablo III Duo 0.2.1-dev", .capabilities=REQUIRED_CAPS,
+    .name="Diablo III Duo 0.2.2-dev", .capabilities=REQUIRED_CAPS,
     .supports_build=supports, .create=create, .destroy=destroy, .sample=sample, .tick=tick
 };
 #if defined(__GNUC__)

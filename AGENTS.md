@@ -3,8 +3,9 @@
 ## Objective and present evidence
 
 Develop a read-only Diablo III companion for Eden Duo on AYN Thor. Native
-`0.2.1-dev` extends the earlier live candidate with character attributes,
-equipment inspection and exploration/terrain. The separate root builder still
+`0.2.2-dev` extends the earlier live candidate with explored quest/location and
+goblin markers. These additions are offline-checked only; the last observed
+device package remains `0.2.1-dev`. The separate root builder still
 produces static `0.1.1-dev`. Read `docs/next-step.md` and `docs/validation.md` for
 the exact current device evidence and unfinished work; never promote historical
 observations or synthetic fixtures into a hardware claim.

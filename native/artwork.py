@@ -67,6 +67,43 @@ def map_assets():
     d.ellipse((49,41,79,71),fill='#141410')
     save(im.resize((64,64),Image.Resampling.LANCZOS),'icon-map-pin')
     save(Image.new('RGBA',(16,8),'#141410'),'map-background')
+    marker_assets()
+
+
+def marker_assets():
+    """Small, distinct symbols stay readable above both bright and dark terrain."""
+    for kind,ink in (('quest',GOLD),('portal',GOLD),('waypoint','#91BABD'),
+                     ('shrine',CREAM),('pylon',GOLD),('goblin','#ACC77C')):
+        im=Image.new('RGBA',(128,128));d=ImageDraw.Draw(im)
+        d.ellipse((5,5,123,123),fill='#141410',outline=ink,width=5)
+        if kind=='quest':
+            d.polygon([(64,23),(103,64),(64,105),(25,64)],outline=ink,width=4)
+            d.line([(64,42),(64,68)],fill=ink,width=8)
+            d.ellipse((59,78,69,88),fill=ink)
+        elif kind=='portal':
+            d.arc((35,25,93,83),180,360,fill=ink,width=8)
+            d.line([(35,54),(35,96),(93,96),(93,54)],fill=ink,width=8)
+            d.line([(24,101),(104,101)],fill=ink,width=5)
+        elif kind=='waypoint':
+            d.polygon([(64,23),(98,64),(64,105),(30,64)],outline=ink,width=5)
+            d.polygon([(64,44),(82,64),(64,84),(46,64)],fill=ink)
+            d.line([(18,64),(29,64)],fill=ink,width=4)
+            d.line([(99,64),(110,64)],fill=ink,width=4)
+        elif kind=='shrine':
+            d.line([(35,96),(93,96)],fill=ink,width=7)
+            d.line([(45,88),(45,64),(83,64),(83,88)],fill=ink,width=6)
+            d.polygon([(64,23),(80,45),(64,57),(50,45)],fill=ink)
+        elif kind=='pylon':
+            d.polygon([(68,21),(39,69),(61,69),(53,107),(91,56),(69,56)],fill=ink)
+        else:
+            d.polygon([(42,27),(86,27),(78,46),(50,46)],outline=ink,width=5)
+            d.ellipse((31,42,97,102),outline=ink,width=6)
+            d.line([(44,47),(84,47)],fill=ink,width=6)
+            d.polygon([(64,59),(79,75),(64,91),(49,75)],fill=ink)
+        save(im.resize((64,64),Image.Resampling.LANCZOS),'icon-poi-'+kind)
+    im=Image.new('RGBA',(128,128));d=ImageDraw.Draw(im)
+    d.polygon([(64,14),(101,74),(72,63),(72,111),(56,111),(56,63),(27,74)],fill=GOLD)
+    save(im.resize((64,64),Image.Resampling.LANCZOS),'icon-direction')
 
 def font():
     face = ImageFont.truetype(str(FONTS / "SourceSans3-Regular.otf"), 96,

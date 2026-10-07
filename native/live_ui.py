@@ -10,9 +10,9 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent
 REPO = ROOT.parent
 MODULE = 'modules/android-arm64-v8a/01001B300B9BE000.so'
-MODULE_HASH = 'cbc2105ba4f54350ffee757d788394765599492f9feba38d8c1e94cfbb64db5e'
+MODULE_HASH = '42827d0926b6b5c3b4b4a4b1cad6308164d7e946d803127b20f7c97134e9a9e3'
 BUILD_ID = '2607A74F5DF7754CC0357B5DF7E496931355D8CA000000000000000000000000'
-VERSION = '0.2.1-dev'
+VERSION = '0.2.2-dev'
 ASSETS = ROOT / 'assets'
 C = {'bg':'11110E', 'panel':'191813', 'selected':'242117', 'rule':'49412E',
      'gold':'D7B574', 'text':'F1EBDD', 'muted':'BDB4A0'}
@@ -185,7 +185,8 @@ def skills():
 
 def exploration():
     widgets = chrome('map')+[image('title-map',44,115,820,60)]
-    widgets += live('map.description','map_description',46,187,1140,4,'muted',
+    widgets += button('Next marker','poi_next',940,121,256,74,'pin')
+    widgets += live('map.description','map_description',88,200,1108,4,'muted',
                     'Enter the world to begin exploring.')
     widgets += [rect(44,246,1152,580,'panel','rule')]
     # A real map widget keeps terrain cached while its camera and markers move.
@@ -198,13 +199,20 @@ def exploration():
                  'marker_anchor':[0.5,0.5],'marker_scale':1,
                  'view_rect_x0_bind':'map.view.x0','view_rect_x1_bind':'map.view.x1',
                  'view_rect_y0_bind':'map.view.y0','view_rect_y1_bind':'map.view.y1',
-                 'view_rect_pad':0,'pan_zoom':True,'min_zoom':0.25,'max_zoom':8}]
+                 'view_rect_pad':0,'pan_zoom':True,'min_zoom':0.25,'max_zoom':8,
+                 'on_marker_tap':'poi_select','marker_tap_groups':['poi'],'marker_hit_px':32}]
     # Preload outside the opaque map (the runtime culls covered map widgets).
     # A normal opaque rectangle covers these 1px workers without suppressing them.
     preloader=image('map-background',44,85,1,1)
     preloader.update(src_bind='map.pending',need_bind='map.available')
     widgets += [preloader,image('icon-player',45,85,1,1),image('icon-map-pin',46,85,1,1),
-                rect(44,85,3,1,'bg')]
+                *[image('icon-poi-'+kind,47+i,85,1,1)
+                  for i,kind in enumerate(('quest','portal','waypoint','shrine','pylon','goblin'))],
+                rect(44,85,9,1,'bg')]
+    direction=image('icon-direction',46,196,28,28)
+    direction.update(rotate_bind='map.focus.angle',pivot=[14,14],
+                     need_bind='map.focus.direction',hide_bind='module_error',hide_eq=1)
+    widgets += [direction]
     empty=label('Exploration data unavailable',399,505,5,'muted',630)
     empty.update(need_bind='!map.ready',bind_text='map.waiting',hide_bind='module_error',hide_eq=1)
     widgets += [empty]
@@ -222,8 +230,12 @@ def make_manifest():
     actions.update({f'inspect_{i}':{'kind':'module','action':'inspect_equipment','argument':i}
                     for i in range(len(GEAR))})
     actions.update({name:{'kind':'module','action':name,'argument':0}
-                    for name in ('map_zoom_in','map_zoom_out','map_recenter','map_pin','map_clear_pin')})
+                    for name in ('map_zoom_in','map_zoom_out','map_recenter','map_pin','map_clear_pin','poi_next')})
     actions['map_recenter']={'kind':'view_reset','view':'exploration'}
+    actions['poi_select']={'kind':'module','action':'poi_select','argument':'$payload'}
+    actions['map_sync_view']={'kind':'view_reset','view':'exploration','enabled_bind':'map.reset_pending'}
+    actions['map_sync_selection']={'kind':'map_select','group':'poi','value':'$map.poi.selected_slot',
+                                   'enabled_bind':'map.selection_pending'}
     return {'format':1,'name':'Diablo III Duo - Live Preview','title_id':'01001B300B9BE000',
             'min_runtime':18,'canvas_w':1240,'canvas_h':1080,'background':color('bg'),
             'flags':{'gpu_composite':True},
@@ -234,11 +246,14 @@ def make_manifest():
             'map':{'areas':{'exploration':{
                 'min':[0,0],'max':[2304*64,1160*64],
                 'image':'file:assets/map-background.png','no_pin':False,'clamp_view':False,
-                'dynamic_markers':[{'count':1,'x':'map.pin.x','y':'map.pin.y',
+                'dynamic_markers':[{'group':'poi','count':64,'x':'map.poi.{i}.x','y':'map.poi.{i}.y',
+                    'kind':'map.poi.{i}.kind','hide_when_kind':0,'icon_src_bind':'map.poi.{i}.icon',
+                    'show_bind':'map.ready','size':34,'selected_size':46,'anchor':[0.5,0.5]},
+                    {'count':1,'x':'map.pin.x','y':'map.pin.y',
                     'icon_src_bind':'map.pin.image','show_bind':'map.pinned',
                     'size':32,'anchor':[0.5,0.9]}]}},'style':{'opacity':1.0}},
-            'enforce':[{'action':'map_recenter','every_ms':1}],
-            'enforce_gate':{'point':'map.reset_pending','max':1},
+            'enforce':[{'action':'map_sync_view','every_ms':1},{'action':'map_sync_selection','every_ms':1}],
+            'enforce_gate':{'point':'map.action_pending','max':1},
             'actions':actions,
             'pages':[{'id':key,'title':title,'widgets':build()}
                      for key,title,build in (('character','Character',character),('equipment','Equipment',equipment),

@@ -33,6 +33,9 @@ def main():
         'map': ['player_probe.c', 'map_probe.c'],
         'map_view': ['map_probe.c', 'map_view.c', 'nav_probe.c'],
         'nav': ['player_probe.c','nav_probe.c'],
+        'markers': ['player_probe.c','map_probe.c','markers_probe.c'],
+        'markers_view': ['map_probe.c','markers_view.c'],
+        'goblins': ['player_probe.c','map_probe.c','goblins_probe.c'],
     }
     build.validate_tree(output, {'test_' + n for n in suites})
     output.mkdir(parents=True, exist_ok=True)

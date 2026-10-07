@@ -1,6 +1,6 @@
 # Native live preview
 
-This separate build produces **0.2.1-dev**, an exact-build Android companion
+This separate build produces **0.2.2-dev**, an exact-build Android companion
 preview. It does not change the older static preview builder. Device observations
 and remaining limits are recorded in `docs/validation.md`.
 
@@ -10,6 +10,12 @@ equipment occupancy and base item names, exploration coverage and resident terra
 Touch controls inspect slots or change the companion map and its local pin.
 They never equip items or write game memory.
 
+The new map marker readers add explored quest destinations, entrances/exits,
+waypoints and visible goblin highlights. Tapping an icon or **Next marker**
+selects a target and shows its direction from the player. New goblin identities
+briefly notify. See [the exact limits](../docs/map-markers.md); these additions
+are offline-checked only, with no 0.2.2 device installation or performance claim.
+
 ## Build
 
 Use Python 3.10 or later and an explicitly installed **macOS Android NDK r28c
@@ -17,10 +23,10 @@ Use Python 3.10 or later and an explicitly installed **macOS Android NDK r28c
 no network calls, automatic downloads or device access.
 
 ```sh
-python3 native/build.py --ndk /absolute/path/to/android-ndk-r28c --output dist/native-0.2.0
+python3 native/build.py --ndk /absolute/path/to/android-ndk-r28c --output dist/native-0.2.2
 ```
 
-Output: `dist/native-0.2.0/01001B300B9BE000.dsmod.zip`, `SHA256SUMS` and a local
+Output: `dist/native-0.2.2/01001B300B9BE000.dsmod.zip`, `SHA256SUMS` and a local
 verification receipt. Use a fresh output directory when replacing an older skin;
 the builder refuses to remove unknown files from existing staging directories.
 
@@ -41,7 +47,7 @@ archives. Synthetic fixtures exercise failed reads, ownership transitions, bound
 cache lifetime, navigation rendering, UI bindings and package integrity. They do
 not establish game-value or Android performance compatibility.
 
-Equipment/exploration acquisition runs at most four times per second; terrain
+Equipment/exploration and marker acquisition run at most four times per second; terrain
 acquisition runs once per second. Small current-world/player checks prevent those
 caches from retaining a previous character's or world's data. Numeric image
 snapshots are copied under a mutex before the separate image worker renders them.

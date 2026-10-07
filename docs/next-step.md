@@ -10,6 +10,17 @@ The exact archive/module hashes and dated observations are in
 [validation](validation.md). The root builder and `project.json` still describe
 the separate static `0.1.1-dev` package.
 
+## Prepared while the Thor charges
+
+The local `0.2.2-dev` candidate adds explored quest/location markers, a selectable
+target direction, and visible goblin highlights with a short notification.
+It keeps terrain and player following independent of marker updates.
+[Marker details](map-markers.md) document conservative omissions and read limits.
+The new candidate is not installed; the last observed device package remains
+0.2.1. No device connection was requested or polled during this pass.
+Next device work is installation and one focused check of marker visibility,
+selection, travel clearing and noticeable overhead. Do not restart a broad audit.
+
 ## Delivered
 
 - Class, level, Paragon, four primary attributes and six combat statistics.
@@ -42,10 +53,12 @@ motion recording uses the CPU path; no second movement benchmark was run.
 
 ## Limits and future work
 
-This is an experimental preview, not broad game compatibility. Pylons/exits,
+This is an experimental preview, not broad game compatibility. Shrines/pylons,
 Greater Rift progress/timing, full item rolls/comparison, sheet damage,
 toughness/recovery, critical damage, actual rune names, passives and buff timers
 are not implemented. Terrain can omit unsupported scenes and dynamic obstacles.
+Entrance/exit, quest, waypoint and goblin markers are implemented in 0.2.2 but
+remain unverified on hardware. Location labels currently identify kinds, not names.
 
 The owner requested a quick completion without repeated testing. The current
 pass ends with focused correctness checks and packaging, not another extended

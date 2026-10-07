@@ -18,7 +18,7 @@ if adapter:
 
 class LiveUiTests(unittest.TestCase):
     PAGE_IDS = {'character', 'equipment', 'combat', 'map'}
-    LOCAL_MAP_ACTIONS = {'map_zoom_in', 'map_zoom_out', 'map_recenter', 'map_pin', 'map_clear_pin'}
+    LOCAL_MAP_ACTIONS = {'map_zoom_in', 'map_zoom_out', 'map_recenter', 'map_pin', 'map_clear_pin', 'poi_next'}
 
     def manifest(self):
         self.assertIsNotNone(adapter, 'Live adapter must connect the reviewed UI to the real reader')
@@ -65,6 +65,7 @@ class LiveUiTests(unittest.TestCase):
             taps = {widget['on_tap'] for widget in widgets if 'on_tap' in widget}
             self.assertTrue(taps <= manifest['actions'].keys())
             used |= taps
+            used |= {widget['on_marker_tap'] for widget in widgets if 'on_marker_tap' in widget}
             edges[page] = {page_actions[tap] for tap in taps if tap in page_actions}
             self.assertTrue({'character', 'combat', 'map'} <= edges[page])
         reachable, pending = set(), ['character']
@@ -74,7 +75,8 @@ class LiveUiTests(unittest.TestCase):
                 reachable.add(current)
                 pending.extend(edges[current] - reachable)
         self.assertEqual(reachable, self.PAGE_IDS)
-        self.assertEqual(used, set(manifest['actions']), 'Every action needs a usable control')
+        used |= {entry['action'] for entry in manifest['enforce']}
+        self.assertEqual(used, set(manifest['actions']), 'Every action needs a control or bounded internal trigger')
 
     def test_each_live_text_field_has_offline_and_error_handling(self):
         for page, widgets in self.pages().items():
@@ -126,7 +128,31 @@ class LiveUiTests(unittest.TestCase):
         expected.update({name: {'kind': 'module', 'action': name, 'argument': 0}
                          for name in self.LOCAL_MAP_ACTIONS})
         expected['map_recenter']={'kind':'view_reset','view':'exploration'}
+        expected['poi_select']={'kind':'module','action':'poi_select','argument':'$payload'}
+        expected['map_sync_view']={'kind':'view_reset','view':'exploration','enabled_bind':'map.reset_pending'}
+        expected['map_sync_selection']={'kind':'map_select','group':'poi','value':'$map.poi.selected_slot',
+                                        'enabled_bind':'map.selection_pending'}
         self.assertEqual(manifest['actions'], expected)
+
+    def test_marker_selection_does_not_reset_the_camera(self):
+        manifest=self.manifest()
+        self.assertEqual(manifest['enforce_gate'],{'point':'map.action_pending','max':1})
+        self.assertEqual(manifest['actions']['map_sync_view']['enabled_bind'],'map.reset_pending')
+        self.assertEqual(manifest['actions']['map_sync_selection']['enabled_bind'],'map.selection_pending')
+        terrain=next(w for w in self.pages()['map'] if w.get('id')=='exploration')
+        self.assertEqual(terrain['on_marker_tap'],'poi_select')
+        self.assertEqual(terrain['marker_tap_groups'],['poi'])
+        definition=manifest['map']['areas']['exploration']['dynamic_markers'][0]
+        self.assertEqual(definition['count'],64)
+        self.assertEqual(definition['group'],'poi')
+        self.assertEqual(definition['hide_when_kind'],0)
+        self.assertEqual(definition['kind'],'map.poi.{i}.kind')
+        self.assertEqual(definition['show_bind'],'map.ready')
+        self.assertGreater(definition['selected_size'],definition['size'])
+        label=next(w for w in self.pages()['map'] if w.get('bind_text')=='map.description')
+        self.assert_fits(label,('Quest objective  /  upper right from you',
+                               'Treasure goblin  /  lower left from you',
+                               'Entrance / exit  /  upper left from you'))
 
     def test_equipment_slots_have_bounded_inspection_controls(self):
         widgets = self.pages()['equipment']

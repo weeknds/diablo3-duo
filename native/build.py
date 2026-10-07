@@ -18,14 +18,17 @@ REPO = ROOT.parent
 NDK_REVISION = '28.2.13676358'
 SOURCES = ('module.c', 'player_probe.c', 'skills_probe.c', 'stats_probe.c',
            'details_probe.c', 'names_probe.c', 'duo_font.c', 'equipment_probe.c',
-           'map_probe.c', 'map_view.c', 'equipment_inspect.c', 'nav_probe.c')
+           'map_probe.c', 'map_view.c', 'equipment_inspect.c', 'nav_probe.c',
+           'markers_probe.c', 'markers_view.c', 'goblins_probe.c')
 HEADERS = ('details_probe.h', 'duo_font.h', 'health_probe.h', 'name_layout.h',
            'names_probe.h', 'player_probe.h', 'probe_internal.h', 'skills_probe.h', 'stats_probe.h',
-           'equipment_probe.h', 'map_probe.h', 'map_view.h', 'equipment_inspect.h', 'nav_probe.h')
+           'equipment_probe.h', 'map_probe.h', 'map_view.h', 'equipment_inspect.h', 'nav_probe.h',
+           'markers_probe.h', 'markers_view.h', 'goblins_probe.h')
 TESTS = ('test_cdr_default.c', 'test_font_decoder.c', 'test_module.c', 'test_names.c',
          'test_player_probe.c', 'test_skills.c', 'test_stats_probe.c',
          'skills_frozen/test_player_probe.c', 'skills_frozen/test_skills_probe.c',
-         'test_equipment.c', 'test_map.c', 'test_map_view.c', 'test_equipment_inspect.c', 'test_nav.c')
+         'test_equipment.c', 'test_map.c', 'test_map_view.c', 'test_equipment_inspect.c', 'test_nav.c',
+         'test_markers.c', 'test_markers_view.c', 'test_goblins.c')
 VENDOR = ('LICENSE.txt', 'UPSTREAM.json', 'dsmod_module_abi.h', 'dsmod_module_extensions.h')
 PINNED_INPUTS = ({'src/' + p for p in SOURCES + HEADERS}
                  | {'tests/' + p for p in TESTS} | {'vendor/' + p for p in VENDOR})

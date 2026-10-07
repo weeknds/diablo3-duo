@@ -43,8 +43,8 @@ const char *map_view_status(const MapView *v) {
         "Location pinned. Some terrain is unavailable in this area.":
         "Some terrain is unavailable. Doors and moving objects are not shown.";
     if (v->pinned) return "Location pinned for this area. Leaving the world clears the pin.";
-    return terrain_available?"Terrain navigation. Pylons, exits and rift timing are not shown.":
-        "Exploration coverage. Room walls, pylons and rift timing are not shown.";
+    return terrain_available?"Explored terrain. Rift timing is unavailable.":
+        "Exploration coverage. Room walls and rift timing are unavailable.";
 }
 
 int map_view_action(MapView *v, const char *action) {

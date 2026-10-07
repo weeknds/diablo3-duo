@@ -1,3 +1,33 @@
+# Map markers candidate — 2026-10-07
+
+`0.2.2-dev` was implemented and packaged offline while the Thor was disconnected
+for charging. **It is not installed or hardware-validated.** The last observed
+device package and public download remain 0.2.1, documented below.
+
+- Local archive: `dist/release-0.2.2-markers/01001B300B9BE000.dsmod.zip`
+- Package SHA-256: `cae8329e466b3a47317544aa69e7450ade3a42dff2c45069cc53fc9db5fc7530`
+- Module SHA-256: `42827d0926b6b5c3b4b4a4b1cad6308164d7e946d803127b20f7c97134e9a9e3`
+- Archive: 392608 bytes; Android arm64, pinned NDK r28c, same exact game build.
+
+The new quest/location and goblin reader suites and marker presentation suite
+passed focused ASan/UBSan checks. The integrated module suite passed after the
+readers were added. All 21 native UI/package checks and the separate static
+manifest guard passed. Android compilation and archive membership/hash checks
+passed. The first and final Android compilation produced the same module hash;
+no separate-directory archive reproducibility run or broad test cycle was added.
+
+A fresh review accepted the synthetic 1240x1080 sample and unavailable frames at
+offline layout/interaction-spec scope, including the native selection binding
+contract. The named review configuration was unavailable, so the fresh reviewer
+applied Impeccable's review contract directly. A separate documentation check
+preserved the incumbent design system and reported older documentation drift.
+These are not device screenshots, gameplay evidence or measured performance.
+
+The next device check is a focused installation and observation of genuine
+quest/waypoint/entrance and goblin events, touch selection, world-change clearing
+and noticeable reader overhead. Shrines, pylons and localized place names remain
+unimplemented; see [marker behavior and read limits](map-markers.md).
+
 # Map correction checkpoint — 2026-10-07
 
 `0.2.1-dev` targets the same Diablo 2.7.7.92380 executable and Eden Duo 1.1.0 /

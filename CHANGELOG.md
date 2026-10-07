@@ -1,5 +1,19 @@
 # Changelog
 
+## 0.2.2-dev — explored map markers — local candidate, 2026-10-07
+
+- Add bounded readers for quest destinations, waypoints and dungeon entrances/exits.
+- Highlight observed, visible treasure goblins using their resident monster-family
+  metadata; alert briefly once per identity in the current world.
+- Add original marker glyphs, tap selection, Next marker and player-relative
+  directions. Keep marker changes separate from cached terrain and camera state.
+- Require explored, current-world positions; clear rejected data and expired
+  targets. Keep shrine/pylon classification and localized place names unavailable.
+
+Built while the Thor was disconnected for charging. Local synthetic checks do
+not establish device behavior or performance. This candidate is not installed
+or published; the downloadable, last-observed package remains 0.2.1-dev.
+
 ## 0.2.1-dev — map motion correction
 
 - Separate cached terrain from the moving player marker and camera. Late image

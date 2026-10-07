@@ -1,5 +1,10 @@
 # Compatibility
 
+The current source also builds a local **0.2.2-dev marker candidate** for the
+same exact target below. Its new quest/location and goblin readers are verified
+only with synthetic fixtures; Thor behavior and overhead are pending. The last
+installed/observed package remains 0.2.1. See [marker scope](map-markers.md).
+
 **0.2.0-dev is an experimental live preview for one game build.** It is not a
 stable-support or all-classes claim. See [validation](validation.md) for dated
 observations and the exact tested artifact.
