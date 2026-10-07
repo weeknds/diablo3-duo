@@ -17,10 +17,12 @@ The root builder and `project.json` still describe static `0.1.1-dev`. The candi
 
 Earlier private `0.0.8-research` observations are dated separately in [validation](validation.md). They do not substitute for the remaining current-candidate checks.
 
+Follow-up after publication: the unchanged beta passed one level-2 softcore Barbarian death in the Inn and town resurrection. The sheet stayed visible during death; level/all four statistics matched the game menus afterward. Shield removal/restoration matched armor 31 → 22 → 31, and the shield was restored. The Thor was left alive in New Tristram, companion enabled and touch overlay hidden.
+
 ## Remaining before a working release
 
 1. Broaden nonzero stat/rune coverage where available. Bash, Hammer of the Ancients and Magic Missile/no-rune comparisons are complete; Hammer and Magic Missile clear/restore checks passed. Restrict declared field/class/mode support to observed behavior; actual rune names remain outside this candidate.
-2. Finish broader dungeon/waypoint travel, loading intervals, death and other unavailable/error states, plus broader physical-input checks. Startup, normal quit, two fresh Barbarian launches, the different Wizard comparison, 108.47-second suspend/resume and one town/inn round trip are already observed. An attempted death test produced no death; death behavior remains unverified.
+2. Finish broader dungeon/waypoint travel, loading intervals, process termination and other unavailable/error states, plus broader physical-input checks. Startup, normal quit, two fresh Barbarian launches, the different Wizard comparison, 108.47-second suspend/resume and one town/inn round trip are already observed. One subsequent Barbarian death/town-resurrection check passed. Other resurrection routes and Hardcore remain outside the verified scope.
 3. Extend the short stationary enabled/disabled presentation checks to representative sustained gameplay. Retain comparable conditions and the procedure/results; presentation cadence alone does not measure CPU cost, battery impact or unique guest FPS.
 4. Review source, dependency notices, package contents and dated device evidence. Only then update compatibility/support metadata and publish a working release. If a required check fails, keep the artifact labeled as a candidate and record the limitation.
 

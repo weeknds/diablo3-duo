@@ -23,6 +23,8 @@ These results prove the stated synthetic behavior and reproducible artifact, not
 
 ### Fresh Thor observations
 
+The death/resurrection and shield-change follow-up below was performed after publication on the same unchanged `0.1.2-rc.1` package. It adds evidence without changing the binary or its experimental status.
+
 The current device is an AYN Thor on Android 13/API 33, with Eden Duo 1.1.0 (versionCode 33940730). Diablo III update `2.7.7.92380` is enabled. The live module loaded for title `01001B300B9BE000` and full executable build:
 
 ```text
@@ -38,13 +40,13 @@ The owner installed `0.1.2-rc.1` through Add-ons. Device readback matched its pa
 | Level | Barbarian level 2 matched Inventory and returned after a second fresh enabled launch; ordinary hero selection to Wizard matched level 1 | Only these early-level non-seasonal characters were checked |
 | Attacks per second | Both characters matched 1.20; Barbarian axe removal/restoration matched 1.20 → 1.00 → 1.20 in Character Details | Axe restored; broader equipment/value coverage pending |
 | Cooldown reduction | 0.00% matched Character Details on Barbarian and Wizard; Barbarian value repeated after the second fresh enabled launch | Nonzero reduction and broader character coverage pending |
-| Armor | Barbarian 31 and Wizard 16 matched Character Details; Barbarian value repeated after the second fresh enabled launch | Current-candidate armor equipment-change sequence pending |
+| Armor | Barbarian 31 and Wizard 16 matched Character Details; Barbarian value repeated after the second fresh enabled launch | Follow-up: shield removal/restoration matched 31 → 22 → 31 in Character Details and the companion; shield restored |
 | Skills/runes | Bash, Hammer of the Ancients and Magic Missile/no-rune matched Skills; Wizard's five empty/locked slots matched. Clearing/restoring Hammer (row 2) and Magic Missile (row 1) through the game changed each to Unassigned and back | Three names and no-rune states only; populated-rune and broader skill coverage remain pending |
 | Movement bonus | +0% matched the current menus on both classes and repeated after the second fresh enabled Barbarian launch | Nonzero movement pending |
 | Navigation/input | Both page actions were logged and captured; physical +/Y and ordinary skill clear/restore worked. Lower Skills-page navigation while the game's Skills menu was open left its selection unchanged | Full controller/input-routing coverage pending |
-| Normal quit | Return to the main menu cleared level, all four stats and all six skill rows | Broader travel/loading, death and process-death checks remain pending |
+| Normal quit | Return to the main menu cleared level, all four stats and all six skill rows | Broader travel/loading and process-death checks remain pending |
 | Town/inn travel | Ordinary A-button door interaction New Tristram → The Slaughtered Calf Inn → New Tristram; both pages retained Barbarian level 2, attacks per second 1.20, cooldown reduction 0.00%, armor 31, movement +0% and Bash/Hammer no-rune at the destinations | First captured sample had already arrived; brief loading/unavailable interval not observed. One town/inn route does not establish dungeon/waypoint travel coverage |
-| Death | A normal level-1 Wizard was left beside attacking Risen for more than three minutes; no death occurred | Death behavior remains unverified; the attempt establishes no immunity or death-state behavior |
+| Death/resurrection | Follow-up on the unchanged released candidate: the normal level-2 Barbarian died to Risen in The Slaughtered Calf Inn. The character sheet stayed visible during the death screen. Resurrect in Town returned to New Tristram; level 2, attacks per second 1.20, cooldown reduction 0.00%, armor 31 and movement +0% then matched the game menus | One softcore death and town resurrection only; corpse/checkpoint resurrection, Hardcore and process termination remain untested. The earlier Wizard attempt produced no death |
 | Suspend/resume | After 108.47 seconds screen-off, both displays were black. Eden was paused on wake with the lower display black; Resume restored Wizard level 1, attacks per second 1.20, cooldown reduction 0.00%, armor 16, movement +0% and Magic Missile | One bounded suspend test; long sleep/process-death behavior remains untested |
 
 Public companion-only captures: [Character](images/live-candidate-character-thor.png), [Skills](images/live-candidate-skills-thor.png), [startup](images/live-candidate-startup-thor.png). Game-menu comparison and quit-clearing captures are retained privately. No game artwork or save data is required to build the public package.
@@ -68,7 +70,7 @@ No obvious large cadence regression appeared in these short stationary windows. 
 
 ### Release limits
 
-Nonzero cooldown/movement coverage, broader physical-input testing, broader travel/loading, death/process-death behavior and sustained gameplay measurements remain release work. The current Barbarian values returned after a second fresh enabled launch; the short presentation checks above do not close the performance requirement. The static root metadata still has `supported_builds: []`, `live_data_available: false` and `verified_on_thor: false`; these flags describe the static preview, not a denial of the narrow live observations above. No stable-support flags have been enabled for the candidate.
+Nonzero cooldown/movement coverage, broader physical-input testing, broader travel/loading, process-death behavior and sustained gameplay measurements remain release work. The current Barbarian values returned after a second fresh enabled launch; the short presentation checks above do not close the performance requirement. The static root metadata still has `supported_builds: []`, `live_data_available: false` and `verified_on_thor: false`; these flags describe the static preview, not a denial of the narrow live observations above. No stable-support flags have been enabled for the candidate.
 
 ## Historical evidence — 2026-10-06
 

@@ -39,7 +39,9 @@ Switching through ordinary hero selection to Wizard matched level 1, attacks per
 
 Two short stationary windows per condition showed 51.22–52.15 presentation events/second with the companion disabled and 50.59–51.57 enabled, with similar approximately 33.38 ms 95th-percentile intervals. This showed no obvious large cadence regression in those windows; it does not establish zero overhead, unique game FPS or sustained-combat performance. The [validation record](docs/validation.md) gives the method and limits.
 
-These are narrow observations from the current candidate. Nonzero cooldown/movement coverage, death, broader travel/loading and other lifecycle states, full input coverage and sustained gameplay measurements remain pending. The brief loading interval on the tested town/inn route was not captured. Historical observations do not validate those remaining checks. See [the current checkpoint](docs/next-step.md), [compatibility](docs/compatibility.md) and [validation protocol](docs/device-validation.md).
+A follow-up on the unchanged beta verified one Barbarian death and town resurrection: the character sheet stayed visible during death and the level/statistics matched the menus after resurrection. Shield removal/restoration also matched armor 31 → 22 → 31.
+
+These are narrow observations from the current candidate. Nonzero cooldown/movement coverage, process termination, broader travel/loading and other lifecycle states, full input coverage and sustained gameplay measurements remain pending. The brief loading interval on the tested town/inn route was not captured. Historical observations do not validate those remaining checks. See [the current checkpoint](docs/next-step.md), [compatibility](docs/compatibility.md) and [validation protocol](docs/device-validation.md).
 
 ## Test and preview locally
 

@@ -1,5 +1,15 @@
 # Changelog
 
+## Validation follow-up — 2026-10-07
+
+No package or code change. On the published `0.1.2-rc.1` binary, a level-2
+softcore Barbarian death and town resurrection were observed. The character
+sheet stayed visible during death; level and all four statistics matched the
+game menus after resurrection. Shield removal/restoration matched armor
+31 → 22 → 31. The shield and original hidden-overlay setting were restored.
+Broader loading, process termination, nonzero cooldown/movement and sustained
+combat measurements remain open. The release-time record below is unchanged.
+
 ## 0.1.2-rc.1 — live candidate — 2026-10-07
 
 - Connected the portrait-free native design to the exact-build, read-only character reader, with Character and Skills pages.
