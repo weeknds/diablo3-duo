@@ -1,3 +1,57 @@
+# Map correction checkpoint — 2026-10-07
+
+`0.2.1-dev` targets the same Diablo 2.7.7.92380 executable and Eden Duo 1.1.0 /
+runtime 18 on AYN Thor. It corrects owner-reported map flicker, following and
+coarse presentation. Previous 0.2.0 static captures did not establish motion
+quality and must not be used as evidence that those defects were absent.
+
+## Exact artifact
+
+- Final package SHA-256: `89732cc3ab8b1e56e0ce7a0c4f2b840a796a5d3a97419c74e7eaa5f03286c269`
+- Module SHA-256: `cbc2105ba4f54350ffee757d788394765599492f9feba38d8c1e94cfbb64db5e`
+- Archive: 340055 bytes, NDK r28c. Source and asset inventories remain pinned.
+
+## Device observation and limit
+
+The exact module above was installed through Eden's package installer; its
+on-device SHA-256 matched. An 18-second recording on the level-2 DuoTest
+Barbarian in New Tristram covered movement in several directions, placing a
+local pin, touch panning, zoom after panning and recentering. All 146 decoded
+frames retained terrain and the white player marker. During unobstructed
+walking the marker stayed near the panel center; the map and fixed-location
+pin moved relative to it. After dragging, zoom returned the view to following.
+The normal hidden game touch controls were restored.
+
+The clip and screenshot use the final module and visual parameters **before**
+the final manifest-only `gpu_composite: true` setting. The Thor disconnected
+before that setting could be installed. Its native-runtime behavior is verified
+from the pinned upstream source, but final GPU rendering on this device remains
+**UNVERIFIED**. The shipped screenshot shows that distinction; it is not a claim
+that the final GPU package completed the device check.
+
+A CPU redraw path was identified and the final package opts into GPU map quads.
+The recording is a short functional check, not a frame-rate benchmark. No 30/60
+FPS result, sustained-combat performance or broad world compatibility is claimed.
+Ordinary-town minimap rotation is confirmed; special rotation modes are not.
+Terrain remains numeric ground coverage, without game artwork, building artwork,
+dynamic obstacles, pylons, exits or Greater Rift timing.
+
+## Focused local validation
+
+Map reader, renderer and module regressions passed under ASan/UBSan. They cover
+client-vs-ACD positions, fast movement between heavy scans, immutable late image
+requests, centered default following, independent pin/zoom, rotated fog/terrain,
+failed reads and world/owner changes. The map renderer was rechecked after the
+final stroke-width change. The final manifest passed all 20 native UI/package
+checks. No unrelated benchmark or extended lifecycle loop was restarted.
+
+Private evidence: `private/device-20261007/map-motion-0.2.1.mp4`,
+`map-motion-events.json`, `map-motion-frames/frames.json`,
+`map-fix-receipt.json`, and `lower-map-fix-final.png`. Public source contains only
+the companion screenshot, not game captures or private data.
+
+---
+
 # Validation record
 
 ## Current preview 0.2.0-dev — 2026-10-07

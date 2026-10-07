@@ -18,6 +18,7 @@
 #define CDR (MAIN+0x1921F98)
 #define MODULE_READ_BOUND (DETAILS_MAX_READS+EQUIPMENT_MAX_READS+MAP_MAX_READS+NAV_MAX_READS+MAP_CONTEXT_MAX_READS+PLAYER_MAX_READS)
 #define MODULE_BYTE_BOUND (DETAILS_MAX_BYTES+EQUIPMENT_MAX_BYTES+MAP_MAX_BYTES+NAV_MAX_BYTES+MAP_CONTEXT_MAX_BYTES+PLAYER_MAX_BYTES)
+#include <math.h>
 static uint32_t bits(float f){uint32_t x;memcpy(&x,&f,4);return x;}
 static const uint32_t skeys[16]={0xFFFFF0C9,0xFFFFF0D3,0xFFFFF026,0xFFFFF0B9,0xFFFFF00E,0xFFFFF00F,0xFFFFF010,0xFFFFF011,0xFFFFF0FC,0xFFFFF0FD,0xFFFFF4B7,0xFFFFF0FF,0xFFFFF100,0xFFFFF0FE,0xFFFFF094,0x000032E3};
 static uint64_t snode(unsigned field,unsigned i){return NODES+field*0x100+i*16;}
@@ -29,8 +30,9 @@ static uint64_t clock_tick;
 static unsigned publications,ends,in_output;
 static struct {
  char skills[6][512],runes[6][64],level[64],paragon[64],status[160],stats[STATS_COUNT][64];
- char gear[EQUIPMENT_SLOT_COUNT][64],selected_slot[64],selected_name[512],map_key[80],map_status[160];
- int64_t class_index,map_available;
+ char gear[EQUIPMENT_SLOT_COUNT][64],selected_slot[64],selected_name[512],map_key[80],map_pending[80],map_status[160];
+ int64_t class_index,map_available,map_ready,reset_pending;
+ double player_x,player_y,view_x0,view_x1;
  unsigned skill_seen[6],rune_seen[6],stat_seen[STATS_COUNT],level_seen,paragon_seen,status_seen,class_seen,gear_seen[EQUIPMENT_SLOT_COUNT],map_seen;
 } shown;
 static void begin(void*p){(void)p;CHECK(!in_output);in_output=1;publications=0;memset(shown.skill_seen,0,sizeof shown.skill_seen);memset(shown.rune_seen,0,sizeof shown.rune_seen);memset(shown.stat_seen,0,sizeof shown.stat_seen);memset(shown.gear_seen,0,sizeof shown.gear_seen);shown.level_seen=shown.paragon_seen=shown.status_seen=shown.class_seen=shown.map_seen=0;}
@@ -40,6 +42,7 @@ static void publish(void*p,const char*name,const char*value){(void)p;CHECK(in_ou
  if(!strcmp(name,"details.paragon")){shown.paragon_seen++;snprintf(shown.paragon,sizeof shown.paragon,"%s",value);}
  if(!strcmp(name,"details.status")){shown.status_seen++;snprintf(shown.status,sizeof shown.status,"%s",value);}
  if(!strcmp(name,"map.image"))snprintf(shown.map_key,sizeof shown.map_key,"%s",value);
+ if(!strcmp(name,"map.pending"))snprintf(shown.map_pending,sizeof shown.map_pending,"%s",value);
  if(!strcmp(name,"map.status"))snprintf(shown.map_status,sizeof shown.map_status,"%s",value);
  if(!strcmp(name,"gear.selected_slot"))snprintf(shown.selected_slot,sizeof shown.selected_slot,"%s",value);
  if(!strcmp(name,"gear.selected_name"))snprintf(shown.selected_name,sizeof shown.selected_name,"%s",value);
@@ -47,7 +50,11 @@ static void publish(void*p,const char*name,const char*value){(void)p;CHECK(in_ou
  for(unsigned i=0;i<STATS_COUNT;i++){char key[40];snprintf(key,sizeof key,"stats.%u.value",i);if(!strcmp(key,name)){shown.stat_seen[i]++;snprintf(shown.stats[i],sizeof shown.stats[i],"%s",value);}}
  for(unsigned i=0;i<EQUIPMENT_SLOT_COUNT;i++){char key[40];snprintf(key,sizeof key,"gear.%u.name",i);if(!strcmp(key,name)){shown.gear_seen[i]++;snprintf(shown.gear[i],sizeof shown.gear[i],"%s",value);}}
 }
-static void integer(void*p,const char*n,int64_t v){(void)p;CHECK(in_output);publications++;if(!strcmp(n,"details.class_index")){shown.class_seen++;shown.class_index=v;}if(!strcmp(n,"map.available")){shown.map_seen++;shown.map_available=v;}}
+static void integer(void*p,const char*n,int64_t v){(void)p;CHECK(in_output);publications++;if(!strcmp(n,"details.class_index")){shown.class_seen++;shown.class_index=v;}if(!strcmp(n,"map.available")){shown.map_seen++;shown.map_available=v;}if(!strcmp(n,"map.ready"))shown.map_ready=v;if(!strcmp(n,"map.reset_pending"))shown.reset_pending=v;}
+static void real(void*p,const char*n,double v){(void)p;CHECK(in_output&&isfinite(v));publications++;
+ if(!strcmp(n,"map.player.x"))shown.player_x=v;if(!strcmp(n,"map.player.y"))shown.player_y=v;
+ if(!strcmp(n,"map.view.x0"))shown.view_x0=v;if(!strcmp(n,"map.view.x1"))shown.view_x1=v;
+}
 static uint64_t tick(void*p){(void)p;return clock_tick;}
 static EdenDsmodBool forbidden(void*p,uint64_t a,const void*d,size_t n){(void)p;(void)a;(void)d;(void)n;CHECK(0);return 0;}
 static uint64_t guest(void*p,const EdenDsmodGuestCall*c){(void)p;(void)c;CHECK(0);return 0;}
@@ -63,7 +70,7 @@ static EdenDsmodHostApi module_fixture(NF*f){
  h.abi_version=1;h.struct_size=sizeof h;h.abi_hash=EDEN_DSMOD_MODULE_ABI_HASH;h.title_id=UINT64_C(0x01001B300B9BE000);h.capabilities=EDEN_DSMOD_CAP_NO_TICK_WHEN_HIDDEN|EDEN_DSMOD_CAP_EXTENSIONS;
  const char*build="2607A74F5DF7754CC0357B5DF7E496931355D8CA000000000000000000000000";
  for(unsigned i=0;i<32;i++){unsigned v;CHECK(sscanf(build+2*i,"%2x",&v)==1);h.build_id[i]=(uint8_t)v;}
- clock_tick=1;h.get_tick=tick;h.begin_output=begin;h.end_output=end;h.publish_text=publish;h.publish_i64=integer;h.write_memory=forbidden;h.queue_guest_call=guest;h.is_mapped=module_map;return h;
+ clock_tick=1;h.get_tick=tick;h.begin_output=begin;h.end_output=end;h.publish_text=publish;h.publish_i64=integer;h.publish_f64=real;h.write_memory=forbidden;h.queue_guest_call=guest;h.is_mapped=module_map;return h;
 }
 static void check_stats(int unavailable){for(unsigned i=0;i<STATS_COUNT;i++)CHECK((!strcmp(shown.stats[i],"Unavailable"))==unavailable);}
 static void check_identity(void){CHECK(!strcmp(shown.level,"Level 42")&&!strcmp(shown.paragon,"Paragon 17")&&shown.class_index==2);}
@@ -174,7 +181,7 @@ static void module_cached_world_changes(void){
  const EdenDsmodModuleApi*a=eden_dsmod_get_module(1,EDEN_DSMOD_MODULE_ABI_HASH);
  const EdenDsmodModuleExtensions*e=eden_dsmod_get_extensions(EDEN_DSMOD_EXT_VERSION,EDEN_DSMOD_EXT_HASH);
  for(unsigned kind=0;kind<4;kind++){
-  NF f;EdenDsmodHostApi h=module_fixture(&f);optional_memory(&f);void*s=a->create(&h,NULL);CHECK(s);a->sample(s,&h);CHECK(shown.map_available&&e->on_action(s,"map_pin",0));reset(&f);clock_tick=2;a->sample(s,&h);CHECK(shown.map_available&&strstr(shown.map_status,"Location pinned"));unsigned image_calls=0;CHECK(e->load_image(s,&h,shown.map_key,&image_calls,current_image)&&image_calls==1);char old_key[80];snprintf(old_key,sizeof old_key,"%s",shown.map_key);
+  NF f;EdenDsmodHostApi h=module_fixture(&f);optional_memory(&f);void*s=a->create(&h,NULL);CHECK(s);a->sample(s,&h);CHECK(shown.map_available&&e->on_action(s,"map_pin",0));reset(&f);clock_tick=2;a->sample(s,&h);CHECK(shown.map_available&&strstr(shown.map_status,"Location pinned"));unsigned image_calls=0;CHECK(e->load_image(s,&h,shown.map_pending,&image_calls,current_image)&&image_calls==1);char old_key[80];snprintf(old_key,sizeof old_key,"%s",shown.map_pending);
   reset(&f);clock_tick=3;
   if(kind==0){put(&f,SA+0xA0,78,4);put(&f,SG+0xB038,78,4);} // New valid world, unchanged player.
   if(kind==1)put(&f,SA+0xA0,UINT32_MAX,4);
@@ -225,6 +232,29 @@ static void module_extensions(void){
  h.build_id[0]^=1;a->sample(s,&h);module_clear();CHECK(!e->on_action(s,"map.pin",0)&&!f.maps);a->destroy(s);release(&f);
 }
 static void module_gates(void){const EdenDsmodModuleApi*a=eden_dsmod_get_module(1,EDEN_DSMOD_MODULE_ABI_HASH);CHECK(!eden_dsmod_get_module(2,EDEN_DSMOD_MODULE_ABI_HASH));CHECK(!eden_dsmod_get_module(1,0));CHECK(!a->supports_build(NULL)&&!a->supports_build("2607A74F5DF7754C"));CHECK(a->capabilities==(EDEN_DSMOD_CAP_NO_TICK_WHEN_HIDDEN|EDEN_DSMOD_CAP_EXTENSIONS));
- for(unsigned i=0;i<47;i++){NF f;EdenDsmodHostApi h=module_fixture(&f);if(i<32)h.build_id[i]^=1;if(i==32)h.title_id=0;if(i==33)h.struct_size=8;if(i==34)h.abi_hash=0;if(i==35)h.abi_version=2;if(i==36)h.userdata=NULL;if(i==37)h.capabilities=0;if(i==38)h.read_memory=NULL;if(i==39)h.is_mapped=NULL;if(i==40)h.publish_text=NULL;if(i==41)h.publish_i64=NULL;if(i==42)h.begin_output=NULL;if(i==43)h.end_output=NULL;if(i==44)h.get_tick=NULL;if(i==45)h.capabilities=EDEN_DSMOD_CAP_NO_TICK_WHEN_HIDDEN;if(i==46)h.capabilities=EDEN_DSMOD_CAP_EXTENSIONS;CHECK(!a->create(&h,NULL)&&!f.maps);release(&f);}
+ for(unsigned i=0;i<48;i++){NF f;EdenDsmodHostApi h=module_fixture(&f);if(i<32)h.build_id[i]^=1;if(i==32)h.title_id=0;if(i==33)h.struct_size=8;if(i==34)h.abi_hash=0;if(i==35)h.abi_version=2;if(i==36)h.userdata=NULL;if(i==37)h.capabilities=0;if(i==38)h.read_memory=NULL;if(i==39)h.is_mapped=NULL;if(i==40)h.publish_text=NULL;if(i==41)h.publish_i64=NULL;if(i==42)h.begin_output=NULL;if(i==43)h.end_output=NULL;if(i==44)h.get_tick=NULL;if(i==45)h.capabilities=EDEN_DSMOD_CAP_NO_TICK_WHEN_HIDDEN;if(i==46)h.capabilities=EDEN_DSMOD_CAP_EXTENSIONS;if(i==47)h.publish_f64=NULL;CHECK(!a->create(&h,NULL)&&!f.maps);release(&f);}
 }
-int main(void){module_success();module_faults();module_late();module_presentation();module_optional_identity();module_late_optional_transition();module_cached_world_changes();module_cached_world_failures();module_navigation_cadence();module_extensions();module_gates();puts("PASS module: stats/identity, traced read/map/closing/world faults, late transitions/cache clearing, 1Hz terrain/4Hz map cadence, transparent retired images, extension/build gates; no writes/calls");return 0;}
+static void module_map_motion(void){
+ NF f;EdenDsmodHostApi h=module_fixture(&f);optional_memory(&f);
+ const EdenDsmodModuleApi*a=eden_dsmod_get_module(1,EDEN_DSMOD_MODULE_ABI_HASH);
+ const EdenDsmodModuleExtensions*e=eden_dsmod_get_extensions(EDEN_DSMOD_EXT_VERSION,EDEN_DSMOD_EXT_HASH);
+ void*s=a->create(&h,NULL);CHECK(s);a->sample(s,&h);CHECK(shown.map_available&&!shown.map_ready);
+ char queued[80];snprintf(queued,sizeof queued,"%s",shown.map_pending);
+ // Movement while the asynchronous image request waits must not retire its key.
+ put(&f,ACTOR+0x30,bits(10),4);put(&f,ACTOR+0x34,bits(5),4);
+ reset(&f);clock_tick=2;a->sample(s,&h);CHECK(!strcmp(queued,shown.map_pending));
+ unsigned calls=0;CHECK(e->load_image(s,&h,queued,&calls,current_image)&&calls==1);
+ reset(&f);clock_tick=3;a->sample(s,&h);CHECK(!shown.map_ready);
+ reset(&f);clock_tick=7;a->sample(s,&h);CHECK(shown.map_ready&&!strcmp(queued,shown.map_key));
+ const double x=shown.player_x,y=shown.player_y,width=shown.view_x1-shown.view_x0;
+ CHECK(fabs((shown.view_x0+shown.view_x1)/2-x)<0.01);
+ put(&f,ACTOR+0x30,bits(11),4);reset(&f);clock_tick=8;a->sample(s,&h);
+ CHECK(shown.player_x<x&&shown.player_y<y&&!strcmp(queued,shown.map_key));
+ CHECK(fabs(shown.view_x1-shown.view_x0-width)<0.01&&!count_access(SA+0xC8,f.maps));
+ CHECK(e->on_action(s,"map_zoom_in",0));reset(&f);clock_tick=9;a->sample(s,&h);
+ CHECK(shown.reset_pending&&shown.view_x1-shown.view_x0<width&&!strcmp(queued,shown.map_key));
+ reset(&f);clock_tick=10;a->sample(s,&h);CHECK(!shown.reset_pending);
+ calls=0;CHECK(e->load_image(s,&h,queued,&calls,current_image)&&calls==1);
+ a->destroy(s);release(&f);
+}
+int main(void){module_map_motion();module_success();module_faults();module_late();module_presentation();module_optional_identity();module_late_optional_transition();module_cached_world_changes();module_cached_world_failures();module_navigation_cadence();module_extensions();module_gates();puts("PASS module: stats/identity, traced read/map/closing/world faults, late transitions/cache clearing, 1Hz terrain/4Hz map cadence, transparent retired images, extension/build gates; no writes/calls");return 0;}

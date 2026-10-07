@@ -217,3 +217,17 @@ tests and the separate acceptance checks before expanding the build gate. Run
 Review source changes before updating `native/SOURCES.json`, module hashes or
 package pins. Keep private research material outside the package and public
 documentation, and do not weaken a failure check simply to make data appear.
+
+## Ordinary minimap presentation correction
+
+For executable build 2607A74F5DF7754C..., client actor +0x30/+0x34 supplies
+presentation XY used by the game's marker (0x3E9D6C) and centering (0x3EBBD8).
+The existing selected-player and visible-world bracket protects the per-sample
+read. ACD +0x60 is not used for displayed XY; Z retains the known ACD +0x68.
+The lightweight context read remains capped at 64 reads / 1024 bytes.
+
+Ordinary minimap projection (0x3EBD3C..0x3EC05C), with screen Y downward:
+`u=(y-x)/sqrt(2); v=(x+y)/sqrt(2)`. Both axes retain equal scale. Terrain,
+exploration masking, player and pin share this projection. Special world/mode
+rotation branches exist and are not claimed as verified by the ordinary-town
+check. Static game data and executable excerpts remain private.

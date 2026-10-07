@@ -7,6 +7,8 @@
 /* Exact-build executable facts (2607A74F5DF7754C...):
  * ActorGetWorld at 0x923F60 calls the ACD accessor at 0x477EA0:
  * ACD+0x60 is XYZ; ACD+0xA0 is its world instance ID.
+ * Minimap centering at 0x3EBBD8 and player-icon projection at 0x3E9D78 use
+ * client actor+0x30/+0x34 for presentation XY. Z remains the proven ACD value.
  * 0x41820 supplies the visible world's ID from client+0x800 -> +0x38.
  * The minimap renderer at 0x3EAC20 traverses main+0x1878FE8 -> +0x20,
  * matching node+8 to that world. Node+0x10 contains XY rectangle bounds.
@@ -157,7 +159,8 @@ void map_probe(const EdenDsmodHostApi *host, const PlayerProbeIdentity *expected
         reader.max_reads -= 64; reader.max_bytes -= 512;
         explored = exploration(&reader, first.world_id, result);
         reader.max_reads = MAP_MAX_READS; reader.max_bytes = MAP_MAX_BYTES;
-        position = read_offset(&reader, first.acd, 0x60, xyz, sizeof xyz, 4);
+        position = read_offset(&reader, expected->actor, 0x30, xyz, 2 * sizeof(float), 4) &&
+            read_offset(&reader, first.acd, 0x68, &xyz[2], sizeof(float), 4);
     }
     const int last_valid = common(&reader, expected, &last);
     result->reads = work.reads; result->bytes = work.bytes;
@@ -184,21 +187,33 @@ void map_probe(const EdenDsmodHostApi *host, const PlayerProbeIdentity *expected
     if (!explored) { result->tile_count = 0; memset(result->tiles, 0, sizeof result->tiles); }
 }
 
-int map_current_world(const EdenDsmodHostApi *host, const PlayerProbeIdentity *expected,
-                      uint32_t *world_id) {
-    if (!world_id) return 0;
-    *world_id=UINT32_MAX;
+int map_current_position(const EdenDsmodHostApi *host, const PlayerProbeIdentity *expected,
+                         uint32_t *world_id, float *x, float *y) {
+    if (world_id) *world_id=UINT32_MAX;
+    if (x) *x=0;
+    if (y) *y=0;
+    if (!world_id || !x || !y) return 0;
     if (!expected || !host || !host->userdata || !host->read_memory || !host->is_mapped ||
         !host->main_base || host->main_base%8 || host->main_size<ROOT_OFFSET+8 ||
         host->main_base>UINT64_MAX-host->main_size) return 0;
     PlayerProbeResult work={0};
     Reader reader={host,&work,MAP_CONTEXT_MAX_READS,MAP_CONTEXT_MAX_BYTES,NULL};
     MapIdentity first,last;
+    float xy[2]={0};
     const int first_valid=common(&reader,expected,&first);
+    const int position_valid=first_valid &&
+        read_offset(&reader,expected->actor,0x30,xy,sizeof xy,4) && coordinate(xy[0]) && coordinate(xy[1]);
     const int last_valid=common(&reader,expected,&last);
-    if (!first_valid || !last_valid || memcmp(&first,&last,sizeof first)) return 0;
+    if (!position_valid || !last_valid || memcmp(&first,&last,sizeof first)) return 0;
     *world_id=first.world_id;
+    *x=xy[0]; *y=xy[1];
     return 1;
+}
+
+int map_current_world(const EdenDsmodHostApi *host, const PlayerProbeIdentity *expected,
+                      uint32_t *world_id) {
+    float x,y;
+    return map_current_position(host,expected,world_id,&x,&y);
 }
 
 unsigned map_cell_visibility(const MapExplorationTile *tile, unsigned column, unsigned row) {

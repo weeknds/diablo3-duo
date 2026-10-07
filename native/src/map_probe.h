@@ -32,7 +32,11 @@ typedef struct MapProbeResult {
 
 void map_probe(const EdenDsmodHostApi *host, const PlayerProbeIdentity *expected,
                MapProbeResult *result);
-/* Small repeated ownership observation; no exploration-list or mask scan. */
+/* Small bracketed presentation-position read; no exploration-list or mask scan.
+ * On failure outputs are UINT32_MAX, 0, 0; all three outputs are required. */
+int map_current_position(const EdenDsmodHostApi *host, const PlayerProbeIdentity *expected,
+                         uint32_t *world_id, float *x, float *y);
+/* Compatibility wrapper using the same position/identity validation. */
 int map_current_world(const EdenDsmodHostApi *host, const PlayerProbeIdentity *expected,
                       uint32_t *world_id);
 /* 0 means unexplored; 1/2 are the native mask's revealed / visited shades. */

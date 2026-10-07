@@ -3,7 +3,7 @@
 A read-only lower-screen companion for **Diablo III: Eternal Collection (Switch)**
 on the AYN Thor, using [Eden Duo](https://github.com/igawa6/eden-duo).
 
-**0.2.0-dev is an experimental live preview.** It targets one executable build;
+**0.2.1-dev is an experimental live preview.** It targets one executable build;
 it is not a broad compatibility or finished-release claim. The interface uses
 warm black, antique gold, serif headings and clear touch controls, without
 character artwork.
@@ -17,7 +17,7 @@ character artwork.
   localized base item names. Equipment changes remain in the game.
 - **Skills:** six equipped skill names and no-rune/unavailable-rune states.
 - **Map:** live explored coverage, supported terrain grids, your position,
-  zoom, recentering and one local location pin. Changing worlds clears the pin.
+  player following, touch pan/pinch, zoom controls and one local location pin. Changing worlds clears the pin.
 
 Missing or rejected data remains unavailable. Terrain is static ground coverage;
 unsupported scenes can be omitted. Doors, enemies, automatic pylon/exit labels,
@@ -27,11 +27,12 @@ The reference designs illustrate a broader goal than the current verified reader
 
 See [current device evidence and limits](docs/next-step.md),
 [compatibility](docs/compatibility.md) and [installation](docs/installation.md).
-Download [v0.2.0-dev](https://github.com/weeknds/diablo3-duo/releases/tag/v0.2.0-dev).
+Download [v0.2.1-dev](https://github.com/weeknds/diablo3-duo/releases/tag/v0.2.1-dev).
 
 ## On the Thor
 
-Actual companion screenshots from the lower display:
+Actual companion screenshots from the lower display. The 0.2.1 map capture
+precedes the final GPU-compositor setting; its device confirmation is pending:
 
 | Character | Equipment |
 | --- | --- |
@@ -39,7 +40,7 @@ Actual companion screenshots from the lower display:
 
 | Exploration | Skills |
 | --- | --- |
-| ![Terrain with player marker and local pin](docs/images/live-0.2-map-thor.png) | ![Live equipped skills](docs/images/live-0.2-skills-thor.png) |
+| ![Terrain with player marker and local pin](docs/images/live-0.2.1-map-thor.png) | ![Live equipped skills](docs/images/live-0.2-skills-thor.png) |
 
 ## Build and test
 

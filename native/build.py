@@ -102,9 +102,15 @@ def stage_package(module_path, stage):
     if digest(module_path) != adapter.MODULE_HASH:
         raise ValueError('Native module differs from the reproduced reviewed build')
     manifest = adapter.make_manifest()
-    assets = {manifest[k][5:] for k in ('font', 'font_atlas')}
-    assets |= {w['src'][5:] for p in manifest['pages'] for w in p['widgets'] if w['type'] == 'image'}
-    assets |= {src[5:] for p in manifest['pages'] for w in p['widgets'] for src in w.get('src_names', [])}
+    def file_assets(value):
+        if isinstance(value, str):
+            return {value[5:]} if value.startswith('file:') else set()
+        if isinstance(value, dict):
+            return set().union(*(file_assets(v) for v in value.values()))
+        if isinstance(value, list):
+            return set().union(*(file_assets(v) for v in value))
+        return set()
+    assets = file_assets(manifest)
     assets |= {'assets/OFL.txt', 'assets/NOTICE.txt'}
     pins = json.loads((ROOT / 'ASSETS.json').read_text())
     for relative in assets:

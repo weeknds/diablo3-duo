@@ -66,6 +66,7 @@ static EdenDsmodHostApi map_setup(Fixture *f) {
     put32(f, MP+0x100, 4); put32(f, MP+0x168, 2); put64(f, MP+0x120, MT); put64(f, MT, MA);
     put32(f, ACD, ACD_ID); put32(f, ACD+0xA0, WORLD);
     put_float(f, ACD+0x60, 25); put_float(f, ACD+0x64, 12.5f); put_float(f, ACD+0x68, -4);
+    put_float(f, ACTOR+0x30, 27); put_float(f, ACTOR+0x34, 14.5f);
     put64(f, C+0x800, VW); put32(f, VW+0x38, WORLD);
     put64(f, MAP_ROOT, MM); put64(f, MM+0x20, MN);
     node(f, 0, WORLD, 0); node(f, 1, WORLD, 1);
@@ -86,7 +87,8 @@ static void valid_map(void) {
     Fixture f; EdenDsmodHostApi h=map_setup(&f); MapProbeResult r;
     map_probe(&h,&f.initial_identity,&r); bounded(&f,&r);
     CHECK(r.available && r.shared_identity_valid && r.exploration_available && r.tile_count==2);
-    CHECK(r.world_id==WORLD && r.x==25 && r.y==12.5f && r.z==-4);
+    /* The minimap follows the client presentation position, not ACD XY. */
+    CHECK(r.world_id==WORLD && r.x==27 && r.y==14.5f && r.z==-4);
     CHECK(r.tiles[0].columns==32 && r.tiles[0].rows==16 && r.tiles[0].min_x==0 && r.tiles[0].max_y==50);
     /* 00,01,10,11 must reproduce transparent,clear,half,clear native shades. */
     const unsigned expected[4]={0,2,1,2};
@@ -126,7 +128,7 @@ static void invalid_identity_or_position(void) {
         {C+0x9A0,0,8},{MG,MP+4,8},{MP+0x100,2,4},{MP+0x168,17,4},
         {MP+0x120,0,8},{MT,UINT64_MAX-7,8},{ACD,ACD_ID+0x10000,4},
         {C+0x800,0,8},{ACD+0xA0,UINT32_MAX,4},{VW+0x38,WORLD+1,4},
-        {ACD+0x60,0x7FC00000,4},{ACD+0x64,0x7F800000,4},{ACD+0x68,0x7F7FFFFF,4}
+        {ACTOR+0x30,0x7FC00000,4},{ACTOR+0x34,0x7F800000,4},{ACD+0x68,0x7F7FFFFF,4}
     };
     for(unsigned i=0;i<sizeof cases/sizeof cases[0];i++) {
         Fixture f; EdenDsmodHostApi h=map_setup(&f); put(&f,cases[i].a,cases[i].v,cases[i].n);
@@ -137,7 +139,7 @@ static void invalid_identity_or_position(void) {
 static void changing_world_or_player(void) {
     for(unsigned kind=0;kind<4;kind++) {
         Fixture f; EdenDsmodHostApi h=map_setup(&f);
-        trigger.address=ACD+0x60;trigger.on=1;
+        trigger.address=ACTOR+0x30;trigger.on=1;
         f.change_address=kind==0?PLAYER+4:kind==1?ACD:kind==2?ACD+0xA0:C+0x84;
         f.change_value=kind<2?ACD_ID+0x10000:kind==2?WORLD+1:0;f.change_size=4;
         if(kind==2){f.second_address=VW+0x38;f.second_value=WORLD+1;f.second_size=4;}
@@ -183,8 +185,53 @@ static void invalid_hosts_clear(void) {
     h.main_size=UINT64_MAX;map_probe(&h,&f.initial_identity,&r);CHECK(!r.available&&!r.reads);release(&f);
 }
 
+static void current_position(void) {
+    Fixture f;EdenDsmodHostApi h=map_setup(&f);uint32_t world=0;float x=-1,y=-1;
+    put64(&f,MAP_ROOT,0); // Fast position is independent of the exploration cache.
+    CHECK(map_current_position(&h,&f.initial_identity,&world,&x,&y));
+    CHECK(world==WORLD && x==27 && y==14.5f && f.calls<=MAP_CONTEXT_MAX_READS && !f.writes);
+    const unsigned calls=f.calls;
+    f.calls=f.maps=0;
+    CHECK(map_current_world(&h,&f.initial_identity,&world) && world==WORLD);
+    CHECK(f.calls<=MAP_CONTEXT_MAX_READS);
+    f.calls=f.maps=0;
+    put32(&f,ACD+0xA0,WORLD+1);put32(&f,VW+0x38,WORLD+1);
+    CHECK(map_current_position(&h,&f.initial_identity,&world,&x,&y) && world==WORLD+1);
+    release(&f);
+
+    for(unsigned mode=0;mode<2;++mode) for(unsigned n=1;n<=calls;++n) {
+        h=map_setup(&f);if(mode)f.map_fail_on=n;else f.fail_on=n;
+        world=0;x=y=-1;
+        CHECK(!map_current_position(&h,&f.initial_identity,&world,&x,&y));
+        CHECK(world==UINT32_MAX && x==0 && y==0 && f.calls<=MAP_CONTEXT_MAX_READS && !f.writes);
+        release(&f);
+    }
+    const struct{uint64_t address;uint32_t value;} invalid[]={
+        {ACTOR+0x30,0x7FC00000},{ACTOR+0x34,0x7F800000},
+        {ACTOR+0x30,0x7F7FFFFF},{VW+0x38,WORLD+1}
+    };
+    for(unsigned i=0;i<sizeof invalid/sizeof invalid[0];++i) {
+        h=map_setup(&f);put32(&f,invalid[i].address,invalid[i].value);world=0;x=y=-1;
+        CHECK(!map_current_position(&h,&f.initial_identity,&world,&x,&y));
+        CHECK(world==UINT32_MAX && x==0 && y==0 && f.calls<=MAP_CONTEXT_MAX_READS);release(&f);
+    }
+    for(unsigned mutation=0;mutation<2;++mutation) {
+        h=map_setup(&f);trigger.address=ACTOR+0x30;trigger.on=1;
+        f.change_address=mutation?ACTOR:ACD+0xA0;
+        f.change_value=mutation?HANDLE+0x10000:WORLD+1;f.change_size=4;
+        if(!mutation){f.second_address=VW+0x38;f.second_value=WORLD+1;f.second_size=4;}
+        world=0;x=y=-1;
+        CHECK(!map_current_position(&h,&f.initial_identity,&world,&x,&y));
+        CHECK(world==UINT32_MAX && x==0 && y==0 && trigger.seen && f.calls<=MAP_CONTEXT_MAX_READS);
+        release(&f);
+    }
+    world=0;x=y=-1;
+    CHECK(!map_current_position(NULL,NULL,&world,&x,&y) && world==UINT32_MAX && x==0 && y==0);
+}
+
 int main(void) {
     base_reader_suite();valid_map();every_read_failure();invalid_exploration_keeps_position();
     invalid_identity_or_position();changing_world_or_player();changing_map();bounded_large_map();invalid_hosts_clear();
+    current_position();
     puts("PASS map synthetic bounds, packed visibility, field isolation, transitions and read-failure suite");return 0;
 }

@@ -1,6 +1,6 @@
 # Native live preview
 
-This separate build produces **0.2.0-dev**, an exact-build Android companion
+This separate build produces **0.2.1-dev**, an exact-build Android companion
 preview. It does not change the older static preview builder. Device observations
 and remaining limits are recorded in `docs/validation.md`.
 

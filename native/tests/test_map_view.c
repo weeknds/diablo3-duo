@@ -15,6 +15,17 @@ static MapProbeResult fixture(void) {
     return d;
 }
 
+static void movement_does_not_reload_terrain(void) {
+    MapView v={0}; MapProbeResult d=fixture(); map_view_update(&v,&d);
+    CHECK(v.follow_player);
+    const uint64_t terrain=v.revision;
+    d.x=10; d.y=7; map_view_update(&v,&d);
+    CHECK(v.revision==terrain);
+    CHECK(map_view_action(&v,"map_pin"));
+    CHECK(map_view_action(&v,"map_zoom_in"));
+    CHECK(v.revision==terrain);
+}
+
 static uint32_t color(const uint8_t *pixels, unsigned x, unsigned y) {
     CHECK(x<MAP_IMAGE_WIDTH && y<MAP_IMAGE_HEIGHT);
     const uint8_t *p=pixels+(y*MAP_IMAGE_WIDTH+x)*4;
@@ -40,25 +51,28 @@ static void guard(const uint8_t *p) {
 }
 
 static void render_mask_orientation_and_marker(void) {
+    MapProjection unit={.scale=1};float x,y;
+    map_view_point(&unit,1,0,&x,&y);
+    CHECK(fabsf(x-(MAP_IMAGE_WIDTH/2.0f-0.70710678f))<0.001f);
+    CHECK(fabsf(y-(MAP_IMAGE_HEIGHT/2.0f+0.70710678f))<0.001f);
+    map_view_point(&unit,0,1,&x,&y);
+    CHECK(fabsf(x-(MAP_IMAGE_WIDTH/2.0f+0.70710678f))<0.001f);
+    CHECK(fabsf(y-(MAP_IMAGE_HEIGHT/2.0f+0.70710678f))<0.001f);
     MapView v={0};MapProbeResult d=fixture();map_view_update(&v,&d);
-    uint8_t *p=buffer();MapView before=v;
+    uint8_t *p=buffer();MapView before=v;MapProjection projection;
+    CHECK(map_view_projection(&v,&projection));
     CHECK(map_view_render(&v,p+16,MAP_IMAGE_BYTES));guard(p);CHECK(!memcmp(&before,&v,sizeof v));
-    /* Width=40, height=40; 480/40 is the independent fit scale, center=(576,290).
-     * Column-major mask0x27 => lowerleft unseen, upperleft partial, right clear. */
-    CHECK(color(p+16,456,410)==0x141410);
-    CHECK(color(p+16,456,170)==0x373529);
-    CHECK(color(p+16,696,410)==0x665A3C);
-    CHECK(color(p+16,696,170)==0x665A3C);
-    CHECK(color(p+16,576,290)==0xD7B574);
-    CHECK(color(p+16,582,290)==0xF1EBDD);
-    CHECK(color(p+16,0,0)==0x141410);
-    free(p);
+    const float points[4][2]={{-10,-10},{-10,10},{10,-10},{10,10}};
+    const uint32_t shades[4]={0x141410,0x1C1B16,0x24221C,0x24221C};
+    for(unsigned i=0;i<4;++i){map_view_point(&projection,points[i][0],points[i][1],&x,&y);CHECK(color(p+16,(unsigned)x,(unsigned)y)==shades[i]);}
+    CHECK(color(p+16,0,0)==0x141410);free(p);
 }
+
 
 static void actions_and_clamps(void) {
     MapView v={0};MapProbeResult d=fixture();
     CHECK(!map_view_action(&v,"map_pin"));map_view_update(&v,&d);
-    CHECK(v.zoom==1 && !v.pinned && !v.follow_player);
+    CHECK(v.zoom==1 && !v.pinned && v.follow_player);
     const uint64_t first=v.revision;
     CHECK(!map_view_action(&v,NULL) && !map_view_action(&v,"guest_move") && !map_view_action(&v,"map_clear_pin"));
     CHECK(v.revision==first);
@@ -73,19 +87,18 @@ static void actions_and_clamps(void) {
 }
 
 static void pin_stays_at_recorded_position_and_clears(void) {
-    MapView v={0};MapProbeResult d=fixture();
-    d.tiles[0]=(MapExplorationTile){.scene_id=12,.min_x=-100,.min_y=-100,.max_x=100,.max_y=100,.columns=1,.rows=1,.fully_revealed=1};
-    map_view_update(&v,&d);CHECK(map_view_action(&v,"map_pin"));
-    d.x=10;d.y=10;map_view_update(&v,&d);CHECK(v.pin_x==0 && v.pin_y==0);
-    uint8_t *p=buffer();CHECK(map_view_render(&v,p+16,MAP_IMAGE_BYTES));guard(p);
-    CHECK(color(p+16,576,270)==0xDAA759); // the pin's ring at its original position
-    CHECK(color(p+16,600,266)==0xD7B574); // moved player's center
-    CHECK(count_color(p+16,0xDAA759)>0);
-    CHECK(map_view_action(&v,"map_recenter"));CHECK(map_view_render(&v,p+16,MAP_IMAGE_BYTES));
-    CHECK(color(p+16,576,290)==0xD7B574);
-    CHECK(map_view_action(&v,"map_clear_pin"));CHECK(map_view_render(&v,p+16,MAP_IMAGE_BYTES));
-    CHECK(count_color(p+16,0xDAA759)==0);guard(p);free(p);
+    MapView v={0};MapProbeResult d=fixture();map_view_update(&v,&d);
+    MapProjection before,after;CHECK(map_view_projection(&v,&before));
+    uint8_t *a=buffer(),*b=buffer();CHECK(map_view_render(&v,a+16,MAP_IMAGE_BYTES));
+    CHECK(map_view_action(&v,"map_pin"));d.x=10;d.y=10;map_view_update(&v,&d);
+    CHECK(v.pin_x==0&&v.pin_y==0);CHECK(map_view_action(&v,"map_zoom_in"));
+    CHECK(map_view_projection(&v,&after));CHECK(!memcmp(&before,&after,sizeof before));
+    CHECK(map_view_render(&v,b+16,MAP_IMAGE_BYTES));
+    CHECK(!memcmp(a+16,b+16,MAP_IMAGE_BYTES)); // Neither motion, pin nor zoom rerasterizes terrain.
+    CHECK(map_view_action(&v,"map_clear_pin")&&!v.pinned);
+    guard(a);guard(b);free(a);free(b);
 }
+
 
 static void revisions_and_lifecycle(void) {
     MapView v={0};MapProbeResult d=fixture();map_view_update(&v,&d);uint64_t r=v.revision;
@@ -95,7 +108,7 @@ static void revisions_and_lifecycle(void) {
     d.tiles[0].cells[0]=0x55;map_view_update(&v,&d);CHECK(v.revision>r);r=v.revision;
     CHECK(map_view_action(&v,"map_pin"));CHECK(map_view_action(&v,"map_zoom_in"));
     CHECK(map_view_action(&v,"map_recenter"));d.world_id++;map_view_update(&v,&d);
-    CHECK(v.revision>r && !v.pinned && v.zoom==1 && !v.follow_player && v.data.world_id==d.world_id);
+    CHECK(v.revision>r && !v.pinned && v.zoom==1 && v.follow_player && v.data.world_id==d.world_id);
     CHECK(map_view_action(&v,"map_pin"));d.available=0;map_view_update(&v,&d);
     CHECK(!v.data.available && !v.pinned && !v.data.tile_count && v.zoom==1);r=v.revision;
     map_view_update(&v,&d);CHECK(v.revision==r);
@@ -107,7 +120,7 @@ static void unavailable_exploration_is_not_fabricated(void) {
     MapView v={0};MapProbeResult d=fixture();d.exploration_available=0;d.tile_count=0;
     map_view_update(&v,&d);uint8_t *p=buffer();CHECK(map_view_render(&v,p+16,MAP_IMAGE_BYTES));guard(p);
     CHECK(count_color(p+16,0x665A3C)==0 && count_color(p+16,0x373529)==0);
-    CHECK(color(p+16,576,290)==0xD7B574);free(p);
+    CHECK(count_color(p+16,0x141410)==MAP_IMAGE_WIDTH*MAP_IMAGE_HEIGHT);free(p);
 }
 
 static void malformed_render_rejected(void) {
@@ -151,42 +164,28 @@ static NavProbeResult navigation_fixture(void) {
 static void navigation_shape_rotation_and_fog(void) {
     MapView v={0};MapProbeResult d=fixture();NavProbeResult n=navigation_fixture();
     map_view_update(&v,&d);map_view_update_navigation(&v,&n);uint8_t *p=buffer();
-    MapView before=v;CHECK(map_view_render(&v,p+16,MAP_IMAGE_BYTES));guard(p);
-    CHECK(!memcmp(&before,&v,sizeof v));
-    /* At the established 12 pixels/world-unit projection, cell centers are
-     * world(8.75,6.25),(8.75,8.75),(6.25,11.25), independent of the renderer. */
-    CHECK(color(p+16,681,215)==0x706044);
-    CHECK(color(p+16,681,185)==0x706044);
-    CHECK(color(p+16,651,155)==0x706044);
-    CHECK(color(p+16,681,155)==0x242217); // blocked (2,0)
-    CHECK(color(p+16,651,215)==0x242217); // blocked (0,1)
-    CHECK(color(p+16,651,185)==0x242217); // blocked (1,1)
-    CHECK(color(p+16,711,215)==0x242217); // outside the rotated grid
-
-    /* One 2.5-unit ground cell straddles X=0 in the lower half. Its left part
-     * exists in the nav data but is wholly unseen in the native fog fixture. */
+    MapView before=v;CHECK(map_view_render(&v,p+16,MAP_IMAGE_BYTES));guard(p);CHECK(!memcmp(&before,&v,sizeof v));
+    MapProjection projection;CHECK(map_view_projection(&v,&projection));
+    const float points[7][2]={{8.75f,6.25f},{8.75f,8.75f},{6.25f,11.25f},
+                            {8.75f,11.25f},{6.25f,6.25f},{6.25f,8.75f},{11.25f,6.25f}};
+    for(unsigned i=0;i<7;++i){float x,y;map_view_point(&projection,points[i][0],points[i][1],&x,&y);
+        CHECK(color(p+16,(unsigned)x,(unsigned)y)==(i<3?0x24221C:0x141410));}
+    CHECK(count_color(p+16,0xAD9566)>0); // Boundary outline, not rectangular coverage fill.
     n.grid_count=2;n.cell_count=7;
     n.grids[1]=(NavTerrainGrid){.scene_id=988,.columns=1,.rows=1,.cell_offset=6,
-        .origin_x=-1.25f,.origin_y=-15,.axis_x_x=2.5f,.axis_y_y=2.5f};
-    n.ground[0]|=0x40;
+        .origin_x=-1.25f,.origin_y=-15,.axis_x_x=2.5f,.axis_y_y=2.5f};n.ground[0]|=0x40;
     map_view_update_navigation(&v,&n);CHECK(map_view_render(&v,p+16,MAP_IMAGE_BYTES));guard(p);
-    for(unsigned y=441;y<=468;y++)for(unsigned x=562;x<576;x++)
-        CHECK(color(p+16,x,y)==0x141410);
-    CHECK(color(p+16,581,455)==0x706044);
-
-    /* Partial exploration must keep its darker shade even for known ground. */
+    float x,y;map_view_point(&projection,-0.75f,-13.75f,&x,&y);CHECK(color(p+16,(unsigned)x,(unsigned)y)==0x141410);
+    map_view_point(&projection,0.75f,-13.75f,&x,&y);CHECK(color(p+16,(unsigned)x,(unsigned)y)==0x24221C);
     n.grid_count=3;n.cell_count=8;
     n.grids[2]=(NavTerrainGrid){.scene_id=989,.columns=1,.rows=1,.cell_offset=7,
-        .origin_x=-10,.origin_y=10,.axis_x_x=2.5f,.axis_y_y=2.5f};
-    n.ground[0]|=0x80;
+        .origin_x=-10,.origin_y=10,.axis_x_x=2.5f,.axis_y_y=2.5f};n.ground[0]|=0x80;
     map_view_update_navigation(&v,&n);CHECK(map_view_render(&v,p+16,MAP_IMAGE_BYTES));
-    CHECK(color(p+16,471,155)==0x443B2B);guard(p);
-
-    d.exploration_available=0;d.tile_count=0;map_view_update(&v,&d);
-    CHECK(map_view_render(&v,p+16,MAP_IMAGE_BYTES));guard(p);
-    CHECK(count_color(p+16,0x706044)==0&&count_color(p+16,0x443B2B)==0);
-    CHECK(color(p+16,681,215)==0x141410);free(p);
+    map_view_point(&projection,-8.75f,11.25f,&x,&y);CHECK(color(p+16,(unsigned)x,(unsigned)y)==0x1C1B16);
+    d.exploration_available=0;d.tile_count=0;map_view_update(&v,&d);CHECK(map_view_render(&v,p+16,MAP_IMAGE_BYTES));
+    CHECK(count_color(p+16,0x141410)==MAP_IMAGE_WIDTH*MAP_IMAGE_HEIGHT);guard(p);free(p);
 }
+
 
 static void navigation_revisions_and_lifecycle(void) {
     MapView v={0};MapProbeResult d=fixture();NavProbeResult n=navigation_fixture();
@@ -239,8 +238,8 @@ static void malformed_navigation_stays_bounded(void) {
             case 17:v.navigation.grids[0].origin_x=FLT_MAX;break;
         }
         CHECK(map_view_render(&v,p+16,MAP_IMAGE_BYTES));guard(p);
-        CHECK(count_color(p+16,0x706044)==0&&count_color(p+16,0x443B2B)==0);
-        CHECK(count_color(p+16,0xB29B6C)==0&&count_color(p+16,0x655839)==0);
+        if(kind<14&&kind!=0&&kind!=1)CHECK(count_color(p+16,0x24221C)==0&&count_color(p+16,0x1C1B16)==0);
+        CHECK(count_color(p+16,0xAD9566)==0&&count_color(p+16,0x655A42)==0);
     }
     free(p);
 }
@@ -257,6 +256,7 @@ static void partial_terrain_warning_survives_pin(void) {
 }
 
 int main(void) {
+    movement_does_not_reload_terrain();
     render_mask_orientation_and_marker();actions_and_clamps();pin_stays_at_recorded_position_and_clears();
     revisions_and_lifecycle();unavailable_exploration_is_not_fabricated();malformed_render_rejected();
     navigation_shape_rotation_and_fog();navigation_revisions_and_lifecycle();malformed_navigation_stays_bounded();

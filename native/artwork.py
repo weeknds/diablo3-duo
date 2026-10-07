@@ -22,7 +22,7 @@ CREAM = "#F1EBDD"
 def save(image, name):
     info = PngImagePlugin.PngInfo()
     origin = ("Original line geometry drawn by native/artwork.py; GPL-3.0-or-later."
-              if name.startswith('icon-') else
+              if name.startswith('icon-') or name == 'map-background' else
               "Typography rasterized by native/artwork.py from bundled OFL Cinzel or Source Sans 3; "
               "see native/assets/NOTICE.txt and OFL.txt.")
     info.add_text("Source", origin)
@@ -51,6 +51,22 @@ def icon(name, lines=(), polygons=(), ellipses=()):
         d.ellipse(tuple(v * 4 for v in box), outline="white", width=8)
     save(im.resize((64, 64), Image.Resampling.LANCZOS), "icon-" + name)
 
+
+def map_assets():
+    # Original flat location glyphs. Neither glyph represents a character.
+    im=Image.new('RGBA',(128,128));d=ImageDraw.Draw(im)
+    d.ellipse((12,12,116,116),fill='#141410',outline=GOLD,width=4)
+    d.ellipse((30,30,98,98),fill=CREAM)
+    d.ellipse((52,52,76,76),fill=GOLD)
+    save(im.resize((64,64),Image.Resampling.LANCZOS),'icon-player')
+    im=Image.new('RGBA',(128,128));d=ImageDraw.Draw(im)
+    d.polygon([(23,66),(64,119),(105,66)],fill='#141410')
+    d.ellipse((15,7,113,105),fill='#141410')
+    d.polygon([(29,62),(64,110),(99,62)],fill=GOLD)
+    d.ellipse((25,17,103,95),fill=GOLD)
+    d.ellipse((49,41,79,71),fill='#141410')
+    save(im.resize((64,64),Image.Resampling.LANCZOS),'icon-map-pin')
+    save(Image.new('RGBA',(16,8),'#141410'),'map-background')
 
 def font():
     face = ImageFont.truetype(str(FONTS / "SourceSans3-Regular.otf"), 96,
@@ -85,6 +101,7 @@ def font():
 
 
 def main():
+    map_assets()
     OUT.mkdir(exist_ok=True)
     font()
     for i, title in enumerate(("Character", "Demon Hunter", "Barbarian", "Wizard",

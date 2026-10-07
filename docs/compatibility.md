@@ -46,3 +46,12 @@ The separate root `0.1.1-dev` package is a static preview. Its `project.json`
 continues to declare no supported builds or live data. Those flags describe that
 output, not the native preview. Build the correct package as described in
 [installation](installation.md).
+
+
+### 0.2.1 map correction
+
+Targets the same full executable build and runtime 18 as 0.2.0. The changes are
+confined to map position, presentation, camera controls and terrain image lifetime.
+The ordinary-town rotation is known; special mode/world rotations remain outside
+this evidence. The runtime caps ordinary visual publications near 30 Hz; a 60 Hz
+map or exact reproduction of the game's map artwork is not claimed.

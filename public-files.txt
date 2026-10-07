@@ -32,6 +32,7 @@ docs/images/live-0.2-equipment-thor.png
 docs/images/live-0.2-map-thor.png
 docs/images/live-0.2-skills-thor.png
 docs/images/live-0.2-startup-thor.png
+docs/images/live-0.2.1-map-thor.png
 docs/images/live-candidate-character-thor.png
 docs/images/live-candidate-skills-thor.png
 docs/images/live-candidate-startup-thor.png
@@ -66,16 +67,19 @@ native/assets/icon-gear.png
 native/assets/icon-hands.png
 native/assets/icon-helm.png
 native/assets/icon-legs.png
+native/assets/icon-map-pin.png
 native/assets/icon-map.png
 native/assets/icon-movement.png
 native/assets/icon-neck.png
 native/assets/icon-pin.png
+native/assets/icon-player.png
 native/assets/icon-recenter.png
 native/assets/icon-ring.png
 native/assets/icon-shield.png
 native/assets/icon-shoulders.png
 native/assets/icon-skills.png
 native/assets/icon-sword.png
+native/assets/map-background.png
 native/assets/section-combat.png
 native/assets/title-equipment.png
 native/assets/title-map.png

@@ -22,7 +22,9 @@ typedef struct ModuleState {
     EquipmentProbeResult equipment;
     EquipmentInspectResult inspection;
     int selected_slot;
-    MapView map;
+    MapView map, displayed, pending, previous;
+    uint64_t pending_observed;
+    int pending_loaded, reset_pending;
     pthread_mutex_t map_lock;
 } ModuleState;
 
@@ -33,7 +35,7 @@ static int valid_host(const EdenDsmodHostApi *h) {
         h->abi_hash == EDEN_DSMOD_MODULE_ABI_HASH && h->userdata &&
         (h->capabilities & REQUIRED_CAPS) == REQUIRED_CAPS && h->get_tick &&
         h->is_mapped && h->read_memory && h->begin_output && h->end_output &&
-        h->publish_i64 && h->publish_text;
+        h->publish_i64 && h->publish_f64 && h->publish_text;
 }
 static int valid_identity(const EdenDsmodHostApi *h) {
     return h->title_id == TITLE_ID && !memcmp(h->build_id, expected_bytes, sizeof expected_bytes);
@@ -44,7 +46,7 @@ static void *create(const EdenDsmodHostApi *h, const char *config) {
     ModuleState *state=calloc(1,sizeof *state);
     if (!state) return NULL;
     if (pthread_mutex_init(&state->map_lock,NULL)) { free(state); return NULL; }
-    state->map.zoom=1.0f; state->selected_slot=-1;
+    map_view_clear(&state->map); state->selected_slot=-1;
     return state;
 }
 
@@ -53,7 +55,10 @@ static void clear_cached(ModuleState *state) {
     state->inspection=(EquipmentInspectResult){0}; state->selected_slot=-1;
     pthread_mutex_lock(&state->map_lock);
     if (state->map.data.available || state->map.pinned) map_view_clear(&state->map);
+    state->displayed=(MapView){0};state->pending=(MapView){0};state->previous=(MapView){0};
+    state->pending_observed=0;state->pending_loaded=0;
     pthread_mutex_unlock(&state->map_lock);
+    state->reset_pending=1;
     state->cached=0;
     state->next_navigation_refresh=0;
 }
@@ -82,6 +87,7 @@ static void sample(void *instance, const EdenDsmodHostApi *h) {
         pthread_mutex_lock(&state->map_lock);
         const int new_world=!state->map.data.available||state->map.data.world_id!=map.world_id;
         map_view_update(&state->map,&map);
+        if(new_world)state->reset_pending=1;
         pthread_mutex_unlock(&state->map_lock);
         if (map.available && (new_world||now>=state->next_navigation_refresh)) {
             NavProbeResult navigation={0};
@@ -102,12 +108,16 @@ static void sample(void *instance, const EdenDsmodHostApi *h) {
         pthread_mutex_unlock(&state->map_lock);
         if (map_available) {
             uint32_t world=UINT32_MAX;
-            const int current=map_current_world(h,&result.level.identity,&world);
+            float x=0,y=0;
+            const int current=map_current_position(h,&result.level.identity,&world,&x,&y);
             pthread_mutex_lock(&state->map_lock);
             if (!current || world!=state->map.data.world_id) {
                 map_view_clear(&state->map);
+                state->reset_pending=1;
                 state->next_refresh=0;
                 state->next_navigation_refresh=0;
+            } else {
+                state->map.data.x=x;state->map.data.y=y;
             }
             pthread_mutex_unlock(&state->map_lock);
         }
@@ -192,15 +202,60 @@ static void sample(void *instance, const EdenDsmodHostApi *h) {
     h->publish_text(h->userdata,"gear.inspect_note",inspect_note);
     pthread_mutex_lock(&state->map_lock);
     const MapView *view=&state->map;
+    /* Keep terrain generations immutable while the host's asynchronous asset
+     * worker loads them. Walking/zoom/pins never schedule a terrain image.
+     * The pinned runtime drains completed images before sample(). Observe a
+     * completed sink, then allow four further drain ticks before promotion. */
+    if (!view->data.available ||
+        (state->displayed.data.available&&state->displayed.data.world_id!=view->data.world_id) ||
+        (state->pending.data.available&&state->pending.data.world_id!=view->data.world_id)) {
+        state->displayed=(MapView){0};state->pending=(MapView){0};state->previous=(MapView){0};
+        state->pending_loaded=0;state->pending_observed=0;
+    }
+    if (state->pending_loaded) {
+        if (!state->pending_observed) state->pending_observed=now;
+        if (now-state->pending_observed>=4) {
+            state->previous=state->displayed;state->displayed=state->pending;
+            state->pending=(MapView){0};state->pending_loaded=0;state->pending_observed=0;
+        }
+    }
+    if (view->data.available&&!state->pending.data.available&&
+        (!state->displayed.data.available||state->displayed.revision!=view->revision))
+        state->pending=*view; // Coalesce later changes while this generation loads.
     const int terrain_available=view->navigation.available&&view->data.exploration_available;
+    const int ready=available&&view->data.available&&state->displayed.data.available;
     h->publish_i64(h->userdata,"map.available",available&&view->data.available);
-    char map_key[80];snprintf(map_key,sizeof map_key,"module:exploration:%" PRIu64,view->revision);
+    h->publish_i64(h->userdata,"map.ready",ready);
+    h->publish_i64(h->userdata,"map.reset_pending",state->reset_pending);state->reset_pending=0;
+    h->publish_i64(h->userdata,"map.pinned",ready&&view->pinned);
+    char map_key[80],pending_key[80];
+    snprintf(map_key,sizeof map_key,"module:exploration:%" PRIu64,state->displayed.revision);
+    snprintf(pending_key,sizeof pending_key,"module:exploration:%" PRIu64,
+             state->pending.data.available?state->pending.revision:state->displayed.revision);
     h->publish_text(h->userdata,"map.image",map_key);
+    h->publish_text(h->userdata,"map.pending",pending_key);
+    h->publish_text(h->userdata,"map.pin.image","file:assets/icon-map-pin.png");
+    MapProjection projection;
+    if (ready&&map_view_projection(&state->displayed,&projection)) {
+        float x,y,px,py;
+        map_view_point(&projection,view->data.x,view->data.y,&x,&y);
+        map_view_point(&projection,view->pin_x,view->pin_y,&px,&py);
+        const double cx=x*MAP_COORD_SCALE,cy=(MAP_IMAGE_HEIGHT-y)*MAP_COORD_SCALE;
+        const double half=MAP_WINDOW_WIDTH*projection.scale*MAP_COORD_SCALE/(2*view->zoom);
+        const double height=half*MAP_IMAGE_HEIGHT/MAP_IMAGE_WIDTH;
+        h->publish_f64(h->userdata,"map.player.x",cx);h->publish_f64(h->userdata,"map.player.y",cy);
+        h->publish_f64(h->userdata,"map.pin.x",px*MAP_COORD_SCALE);
+        h->publish_f64(h->userdata,"map.pin.y",(MAP_IMAGE_HEIGHT-py)*MAP_COORD_SCALE);
+        h->publish_f64(h->userdata,"map.view.x0",cx-half);h->publish_f64(h->userdata,"map.view.x1",cx+half);
+        h->publish_f64(h->userdata,"map.view.y0",cy-height);h->publish_f64(h->userdata,"map.view.y1",cy+height);
+    }
     h->publish_text(h->userdata,"map.description",view->data.available?
-        (terrain_available?"Terrain  /  White marker: you  /  Gold marker: your pin":
+        (terrain_available?"Drag to explore  /  Pinch to zoom  /  White marker: you":
          view->data.exploration_available?"Explored areas  /  White marker: you  /  Gold marker: your pin":
          "Your position is available. Explored areas are unavailable."):
         "Enter the world to begin exploring.");
+    h->publish_text(h->userdata,"map.waiting",view->data.available?
+                    "Drawing explored terrain...":"Exploration data unavailable");
     h->publish_text(h->userdata,"map.status",map_view_status(view));
     pthread_mutex_unlock(&state->map_lock);
     for(unsigned i=0;i<SKILL_SLOT_COUNT;i++) {
@@ -236,6 +291,7 @@ static EdenDsmodBool action(void *instance,const char *name,int64_t argument) {
     }
     pthread_mutex_lock(&state->map_lock);
     const int accepted=map_view_action(&state->map,name);
+    if(accepted&&(!strcmp(name,"map_zoom_in")||!strcmp(name,"map_zoom_out")))state->reset_pending=1;
     pthread_mutex_unlock(&state->map_lock);
     return accepted?EDEN_DSMOD_TRUE:EDEN_DSMOD_FALSE;
 }
@@ -258,13 +314,18 @@ static EdenDsmodBool load_image(void *instance,const EdenDsmodHostApi *host,cons
     if (!count) return 0;
     MapView view;
     pthread_mutex_lock(&state->map_lock);
-    const int match=revision==state->map.revision&&state->map.data.available;
-    if (match) view=state->map;
+    const MapView *source=NULL;
+    if (state->map.data.available) {
+        if(state->pending.data.available&&revision==state->pending.revision)source=&state->pending;
+        else if(state->displayed.data.available&&revision==state->displayed.revision)source=&state->displayed;
+        else if(state->previous.data.available&&revision==state->previous.revision)source=&state->previous;
+    }
+    const int match=source!=NULL;
+    if(match)view=*source;
     pthread_mutex_unlock(&state->map_lock);
     if (!match) {
-        // Workers may receive a revision after a newer sample superseded it.
-        // Successful transparent content avoids filling the host's failed-key
-        // cache, and cannot display an earlier world's map.
+        // Retired worlds must not expose their terrain. Current-world pending,
+        // displayed and previous generations remain renderable after movement.
         const uint8_t clear[4]={0};
         sink(receiver,1,1,clear,sizeof clear);
         return EDEN_DSMOD_TRUE;
@@ -272,7 +333,18 @@ static EdenDsmodBool load_image(void *instance,const EdenDsmodHostApi *host,cons
     uint8_t *pixels=malloc(MAP_IMAGE_BYTES);
     if (!pixels) return 0;
     const int rendered=map_view_render(&view,pixels,MAP_IMAGE_BYTES);
-    if (rendered) sink(receiver,MAP_IMAGE_WIDTH,MAP_IMAGE_HEIGHT,pixels,MAP_IMAGE_BYTES);
+    if (rendered) {
+        pthread_mutex_lock(&state->map_lock);
+        const int still_current=state->map.data.available&&state->map.data.world_id==view.data.world_id&&
+            ((state->pending.data.available&&revision==state->pending.revision)||
+             (state->displayed.data.available&&revision==state->displayed.revision)||
+             (state->previous.data.available&&revision==state->previous.revision));
+        if(still_current) {
+            sink(receiver,MAP_IMAGE_WIDTH,MAP_IMAGE_HEIGHT,pixels,MAP_IMAGE_BYTES);
+            if(state->pending.data.available&&revision==state->pending.revision)state->pending_loaded=1;
+        } else {const uint8_t clear[4]={0};sink(receiver,1,1,clear,sizeof clear);}
+        pthread_mutex_unlock(&state->map_lock);
+    }
     free(pixels);
     return rendered?EDEN_DSMOD_TRUE:EDEN_DSMOD_FALSE;
 }
@@ -289,7 +361,7 @@ const EdenDsmodModuleExtensions *eden_dsmod_get_extensions(uint32_t version,uint
 static const EdenDsmodModuleApi module = {
     .abi_version=EDEN_DSMOD_MODULE_ABI_VERSION, .struct_size=sizeof(EdenDsmodModuleApi),
     .abi_hash=EDEN_DSMOD_MODULE_ABI_HASH, .title_id=TITLE_ID,
-    .name="Diablo III Duo 0.2.0-dev", .capabilities=REQUIRED_CAPS,
+    .name="Diablo III Duo 0.2.1-dev", .capabilities=REQUIRED_CAPS,
     .supports_build=supports, .create=create, .destroy=destroy, .sample=sample, .tick=tick
 };
 #if defined(__GNUC__)

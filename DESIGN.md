@@ -78,3 +78,11 @@ Character uses a document glyph. Skill rows use numbers rather than decorative
 icons. Typography and asset provenance live in `design/ASSETS.md`. The package
 asset allowlist records exact hashes. Offline sample and stress renders are
 visibly labeled; their values are never written to the installable manifest.
+
+## 0.2.1 map motion adaptation
+
+Keep the existing journal palette and layout. The map now uses a native moving
+camera over cached, finely outlined terrain, with a small cream position marker
+and gold pin. No character illustration. Camera motion, pins and zoom must never
+force a new terrain bitmap. See docs/ui-spec.md for the runtime constraints and
+docs/validation.md for the separate movement evidence.

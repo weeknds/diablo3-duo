@@ -1,6 +1,6 @@
 # Install the live preview
 
-`0.2.0-dev` is an experimental, read-only companion. Check the exact game build
+`0.2.1-dev` is an experimental, read-only companion. Check the exact game build
 and tested setup in [compatibility](compatibility.md). Back up saves and use a
 separate test profile. Keep the previous companion package for rollback.
 

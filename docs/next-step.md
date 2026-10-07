@@ -1,11 +1,11 @@
 # Live preview checkpoint — 2026-10-07
 
-`0.2.0-dev` provides Character, Equipment, Map and Skills views on the Thor's
+`0.2.1-dev` provides Character, Equipment, Map and Skills views on the Thor's
 lower display. It preserves the approved warm-black/gold journal design with no
 character picture or repeated health/resource HUD.
 
 The current downloadable preview is
-[v0.2.0-dev](https://github.com/weeknds/diablo3-duo/releases/tag/v0.2.0-dev).
+[v0.2.1-dev](https://github.com/weeknds/diablo3-duo/releases/tag/v0.2.1-dev).
 The exact archive/module hashes and dated observations are in
 [validation](validation.md). The root builder and `project.json` still describe
 the separate static `0.1.1-dev` package.
@@ -22,6 +22,21 @@ the separate static `0.1.1-dev` package.
 
 The observed character is the DuoTest level-2 Barbarian in New Tristram with axe
 and shield restored. The normal profile and game-owned equipment are preserved.
+
+## Map correction
+
+The owner reported flicker and incorrect tracking in 0.2.0. The 0.2.1 correction
+separates immutable terrain images from the native camera/player marker, uses
+client presentation XY and the ordinary game minimap orientation, and follows
+at a fixed scale by default. Touch drag/pinch and Center on you control the view.
+Terrain outlines are thinner and the default view shows more surroundings.
+See the dated movement evidence in validation.md; this is not a new broad
+performance or compatibility test.
+
+The final package additionally enables Eden's GPU map compositor. The Thor
+was disconnected before this manifest-only setting could be installed. The
+motion check and screenshot verify the module using the CPU path; finishing
+GPU installation/confirmation is the outstanding device step.
 
 ## Limits and future work
 

@@ -85,6 +85,12 @@ class LiveUiTests(unittest.TestCase):
                 for widget in widgets:
                     if 'bind_text' not in widget:
                         continue
+                    if widget.get('bind_text') == 'map.waiting':
+                        self.assertEqual(widget['need_bind'], '!map.ready')
+                        self.assertEqual(widget['hide_bind'], 'module_error')
+                        self.assertEqual(widget['hide_eq'], 1)
+                        self.assertTrue(widget['text'])
+                        continue
                     self.assertEqual(widget['need_bind'], 'module_ready')
                     self.assertEqual(widget['hide_bind'], 'module_error')
                     self.assertEqual(widget['hide_eq'], 1)
@@ -119,6 +125,7 @@ class LiveUiTests(unittest.TestCase):
                          for i in range(13)})
         expected.update({name: {'kind': 'module', 'action': name, 'argument': 0}
                          for name in self.LOCAL_MAP_ACTIONS})
+        expected['map_recenter']={'kind':'view_reset','view':'exploration'}
         self.assertEqual(manifest['actions'], expected)
 
     def test_equipment_slots_have_bounded_inspection_controls(self):
@@ -170,12 +177,21 @@ class LiveUiTests(unittest.TestCase):
 
     def test_map_image_and_local_controls_have_available_and_unavailable_states(self):
         widgets = self.pages()['map']
-        terrain = [w for w in widgets if w.get('src_bind') == 'map.image']
+        terrain = [w for w in widgets if w.get('image_bind') == 'map.image']
         self.assertEqual(len(terrain), 1)
-        self.assertEqual(terrain[0]['need_bind'], 'map.available')
+        self.assertEqual(terrain[0]['type'], 'map')
+        self.assertTrue(terrain[0]['pan_zoom'])
+        self.assertTrue(self.manifest()['flags']['gpu_composite'])
+        self.assertFalse(self.manifest()['map']['areas']['exploration']['no_pin'])
+        self.assertEqual(terrain[0]['marker_x_bind'], 'map.player.x')
+        self.assertEqual(self.manifest()['actions']['map_recenter'],
+                         {'kind':'view_reset','view':'exploration'})
+        pending=next(w for w in widgets if w.get('src_bind')=='map.pending')
+        self.assertLess(pending['rect'][1],terrain[0]['rect'][1])
+        self.assertEqual(terrain[0]['need_bind'], 'map.ready')
         self.assertEqual(terrain[0]['hide_bind'], 'module_error')
         self.assertEqual(terrain[0]['hide_eq'], 1)
-        self.assertTrue(any(w.get('need_bind') == '!map.available' and w.get('text') for w in widgets))
+        self.assertTrue(any(w.get('need_bind') == '!map.ready' and w.get('text') for w in widgets))
         controls = {w['on_tap'] for w in widgets if w.get('on_tap') in self.LOCAL_MAP_ACTIONS}
         self.assertEqual(controls, self.LOCAL_MAP_ACTIONS)
         self.assertTrue({'map.description', 'map.status'} <= {w.get('bind_text') for w in widgets})

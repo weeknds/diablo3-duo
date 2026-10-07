@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.2.1-dev — map motion correction
+
+- Separate cached terrain from the moving player marker and camera. Late image
+  workers retain immutable current-world generations instead of blanking them.
+- Read the same client presentation XY used by the game's minimap every sample.
+  Match its ordinary-world orientation and use a fixed player-centered scale.
+- Add native touch panning and pinch zoom, with recentering after zoom controls
+  and world changes. Keep the local pin independent of terrain rendering.
+- Render finer terrain outlines at twice the previous resolution; remove the
+  large rectangular exploration fill when terrain is available.
+
+
 ## 0.2.0-dev — expanded live preview — 2026-10-07
 
 - Added class, Paragon, primary attributes, critical chance and resource cost reduction.

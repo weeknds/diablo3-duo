@@ -6,7 +6,7 @@
 
 void map_view_clear(MapView *v) {
     const uint64_t next = v->revision + 1;
-    *v = (MapView){.revision = next, .zoom = 1.0f};
+    *v = (MapView){.revision = next, .zoom = 1.0f, .follow_player = 1};
 }
 
 void map_view_update(MapView *v, const MapProbeResult *data) {
@@ -16,8 +16,7 @@ void map_view_update(MapView *v, const MapProbeResult *data) {
     }
     if (!v->data.available || v->data.world_id != data->world_id) map_view_clear(v);
     /* Counters and diagnostic pointers are not image content. */
-    int changed = v->data.x != data->x || v->data.y != data->y ||
-        v->data.exploration_available != data->exploration_available ||
+    int changed = v->data.exploration_available != data->exploration_available ||
         v->data.tile_count != data->tile_count ||
         memcmp(v->data.tiles, data->tiles, sizeof data->tiles);
     v->data = *data;
@@ -64,149 +63,138 @@ int map_view_action(MapView *v, const char *action) {
         if (!v->pinned) return 0;
         v->pinned = 0;
     } else return 0;
-    ++v->revision;
     return 1;
 }
 
-static void pixel(uint8_t *p, int x, int y, uint32_t color) {
-    if (x < 0 || y < 0 || x >= (int)MAP_IMAGE_WIDTH || y >= (int)MAP_IMAGE_HEIGHT) return;
-    uint8_t *at = p + ((size_t)y * MAP_IMAGE_WIDTH + (unsigned)x) * 4u;
-    at[0] = (uint8_t)(color >> 16); at[1] = (uint8_t)(color >> 8);
-    at[2] = (uint8_t)color; at[3] = 255;
+/* The ordinary game minimap rotates world XY by -135 degrees and flips
+ * screen Y. Both axes retain the same scale (no isometric squash).
+ * Executable projection: 0x3EBD3C..0x3EC05C; marker: 0x3E9D6C. */
+static void project(float x,float y,float *u,float *v) {
+    *u=(y-x)*0.7071067812f; *v=(x+y)*0.7071067812f;
 }
-
-static void box(uint8_t *p, int x0, int y0, int x1, int y1, uint32_t color) {
-    if (x0 < 1) x0 = 1;
-    if (y0 < 1) y0 = 1;
-    if (x1 >= (int)MAP_IMAGE_WIDTH) x1 = (int)MAP_IMAGE_WIDTH-1;
-    if (y1 >= (int)MAP_IMAGE_HEIGHT) y1 = (int)MAP_IMAGE_HEIGHT-1;
-    for (int y=y0; y<y1; ++y) for (int x=x0; x<x1; ++x) pixel(p,x,y,color);
+static void unproject(const MapProjection *p,float px,float py,float *x,float *y) {
+    const float u=p->u+(px-MAP_IMAGE_WIDTH/2.0f)/p->scale;
+    const float v=p->v+(py-MAP_IMAGE_HEIGHT/2.0f)/p->scale;
+    *x=(v-u)*0.7071067812f; *y=(u+v)*0.7071067812f;
 }
-
-static void fog_box(uint8_t *mask,int x0,int y0,int x1,int y1,unsigned shade) {
-    if (!mask) return;
-    if (x0<1) x0=1;
-    if (y0<1) y0=1;
-    if (x1>=(int)MAP_IMAGE_WIDTH) x1=(int)MAP_IMAGE_WIDTH-1;
-    if (y1>=(int)MAP_IMAGE_HEIGHT) y1=(int)MAP_IMAGE_HEIGHT-1;
-    for (int y=y0;y<y1;++y) for (int x=x0;x<x1;++x) {
-        uint8_t *at=mask+(size_t)y*MAP_IMAGE_WIDTH+(unsigned)x;
-        if (*at<shade) *at=(uint8_t)shade;
-    }
+void map_view_point(const MapProjection *p,float x,float y,float *px,float *py) {
+    float u,v; project(x,y,&u,&v);
+    *px=MAP_IMAGE_WIDTH/2.0f+(u-p->u)*p->scale;
+    *py=MAP_IMAGE_HEIGHT/2.0f+(v-p->v)*p->scale;
 }
-
-static void circle(uint8_t *p, int x, int y, int radius, uint32_t color) {
-    for (int dy=-radius; dy<=radius; ++dy) for (int dx=-radius; dx<=radius; ++dx)
-        if (dx*dx+dy*dy <= radius*radius) pixel(p,x+dx,y+dy,color);
-}
-
-typedef struct Projection { float x, y, scale; } Projection;
-static int sx(const Projection *p, float x) {
-    return (int)fmaxf(-100000.0f,fminf(100000.0f,MAP_IMAGE_WIDTH/2.0f+(x-p->x)*p->scale));
-}
-static int sy(const Projection *p, float y) {
-    return (int)fmaxf(-100000.0f,fminf(100000.0f,MAP_IMAGE_HEIGHT/2.0f-(y-p->y)*p->scale));
-}
-
-static void terrain(uint8_t *pixels,const uint8_t *fog,const Projection *p,
-                    const NavProbeResult *nav) {
-    for (unsigned n=0;n<nav->grid_count;++n) {
-        const NavTerrainGrid *g=&nav->grids[n];
-        const float det=g->axis_x_x*g->axis_y_y-g->axis_x_y*g->axis_y_x;
-        if (!g->columns || !g->rows || g->columns>512 || g->rows>512 ||
-            g->cell_offset>nav->cell_count ||
-            (uint32_t)g->columns*g->rows>nav->cell_count-g->cell_offset ||
-            !isfinite(g->origin_x)||!isfinite(g->origin_y)||
-            fabsf(g->origin_x)>1000000||fabsf(g->origin_y)>1000000||
-            !isfinite(g->axis_x_x)||!isfinite(g->axis_x_y)||
-            !isfinite(g->axis_y_x)||!isfinite(g->axis_y_y)||
-            fabsf(g->axis_x_x)>2.51f||fabsf(g->axis_x_y)>2.51f||
-            fabsf(g->axis_y_x)>2.51f||fabsf(g->axis_y_y)>2.51f||
-            !isfinite(det)||fabsf(det)<0.001f) continue;
-        int x0=(int)MAP_IMAGE_WIDTH,y0=(int)MAP_IMAGE_HEIGHT,x1=0,y1=0;
-        for (unsigned corner=0;corner<4;++corner) {
-            const float c=(corner&1)?g->columns:0, r=(corner&2)?g->rows:0;
-            const int x=sx(p,g->origin_x+c*g->axis_x_x+r*g->axis_y_x);
-            const int y=sy(p,g->origin_y+c*g->axis_x_y+r*g->axis_y_y);
-            if(x<x0)x0=x;
-            if(x>x1)x1=x;
-            if(y<y0)y0=y;
-            if(y>y1)y1=y;
-        }
-        if(x0<1)x0=1;
-        if(y0<1)y0=1;
-        if(x1>=(int)MAP_IMAGE_WIDTH)x1=(int)MAP_IMAGE_WIDTH-1;
-        if(y1>=(int)MAP_IMAGE_HEIGHT)y1=(int)MAP_IMAGE_HEIGHT-1;
-        const float edge=fminf(0.32f,0.8f/(2.5f*p->scale));
-        for(int y=y0;y<=y1;++y) for(int x=x0;x<=x1;++x) {
-            const unsigned shade=fog[(size_t)y*MAP_IMAGE_WIDTH+(unsigned)x];
-            if(!shade)continue;
-            const float dx=p->x+(x+0.5f-MAP_IMAGE_WIDTH/2.0f)/p->scale-g->origin_x;
-            const float dy=p->y-(y+0.5f-MAP_IMAGE_HEIGHT/2.0f)/p->scale-g->origin_y;
-            const float column=(dx*g->axis_y_y-dy*g->axis_y_x)/det;
-            const float row=(dy*g->axis_x_x-dx*g->axis_x_y)/det;
-            if(!isfinite(column)||!isfinite(row)||column<0||row<0||
-                column>=g->columns||row>=g->rows)continue;
-            const unsigned c=(unsigned)column,r=(unsigned)row;
-            if(!nav_cell_ground(nav,n,c,r))continue;
-            const float cx=column-c,ry=row-r;
-            const int border=(cx<edge&&(c==0||!nav_cell_ground(nav,n,c-1,r)))||
-                (cx>1-edge&&!nav_cell_ground(nav,n,c+1,r))||
-                (ry<edge&&(r==0||!nav_cell_ground(nav,n,c,r-1)))||
-                (ry>1-edge&&!nav_cell_ground(nav,n,c,r+1));
-            pixel(pixels,x,y,border?(shade==2?0xB29B6C:0x655839):(shade==2?0x706044:0x443B2B));
-        }
-    }
-}
-
-int map_view_render(const MapView *v, uint8_t *rgba, size_t size) {
-    if (!v || !rgba || size != MAP_IMAGE_BYTES || !v->data.available || !v->data.shared_identity_valid ||
-        v->data.tile_count > MAP_MAX_TILES || !isfinite(v->data.x) || !isfinite(v->data.y) ||
-        !isfinite(v->zoom) || v->zoom < 0.5f || v->zoom > 8.0f ||
-        (v->pinned && (!isfinite(v->pin_x) || !isfinite(v->pin_y)))) return 0;
-    const MapProbeResult *d = &v->data;
-    float min_x=d->x-20, max_x=d->x+20, min_y=d->y-20, max_y=d->y+20;
-    if (d->exploration_available) for (unsigned i=0; i<d->tile_count; ++i) {
+int map_view_projection(const MapView *view,MapProjection *p) {
+    if (!view||!p||!view->data.available||!view->data.shared_identity_valid||
+        view->data.tile_count>MAP_MAX_TILES||!isfinite(view->data.x)||!isfinite(view->data.y)) return 0;
+    const MapProbeResult *d=&view->data;
+    float min_u=INFINITY,min_v=INFINITY,max_u=-INFINITY,max_v=-INFINITY;
+    if (d->exploration_available) for (unsigned i=0;i<d->tile_count;++i) {
         const MapExplorationTile *t=&d->tiles[i];
         if (!isfinite(t->min_x)||!isfinite(t->min_y)||!isfinite(t->max_x)||!isfinite(t->max_y)||
-            t->max_x<=t->min_x||t->max_y<=t->min_y) return 0;
-        min_x=fminf(min_x,t->min_x); max_x=fmaxf(max_x,t->max_x);
-        min_y=fminf(min_y,t->min_y); max_y=fmaxf(max_y,t->max_y);
-    }
-    Projection p={(min_x+max_x)/2,(min_y+max_y)/2,
-                  fminf((MAP_IMAGE_WIDTH-120)/(max_x-min_x),(MAP_IMAGE_HEIGHT-100)/(max_y-min_y))*v->zoom};
-    if (v->follow_player) { p.x=d->x; p.y=d->y; }
-    if (!isfinite(p.scale) || p.scale<=0) return 0;
-    const NavProbeResult *nav=&v->navigation;
-    const int has_terrain=nav->available&&nav->shared_identity_valid&&nav->world_id==d->world_id&&
-        nav->grid_count<=NAV_MAX_GRIDS&&nav->cell_count<=NAV_MAX_CELLS&&d->exploration_available;
-    uint8_t *fog=has_terrain?calloc(MAP_IMAGE_WIDTH*MAP_IMAGE_HEIGHT,1):NULL;
-    for (unsigned y=0;y<MAP_IMAGE_HEIGHT;y++) for(unsigned x=0;x<MAP_IMAGE_WIDTH;x++)
-        pixel(rgba,(int)x,(int)y,0x141410);
-    if (d->exploration_available) for (unsigned i=0; i<d->tile_count; ++i) {
-        const MapExplorationTile *t=&d->tiles[i];
-        if (!t->columns||!t->rows||t->columns>32||t->rows>32) { free(fog);return 0; }
-        const float w=(t->max_x-t->min_x)/t->columns, h=(t->max_y-t->min_y)/t->rows;
-        for (unsigned c=0;c<t->columns;c++) for(unsigned r=0;r<t->rows;r++) {
-            const unsigned visibility=map_cell_visibility(t,c,r);
-            if (!visibility) continue;
-            const int x0=sx(&p,t->min_x+c*w),x1=sx(&p,t->min_x+(c+1)*w)+1;
-            const int y0=sy(&p,t->min_y+(r+1)*h),y1=sy(&p,t->min_y+r*h)+1;
-            box(rgba,x0,y0,x1,y1,fog?(visibility==2?0x242217:0x1C1B15):
-                                                    (visibility==2?0x665A3C:0x373529));
-            fog_box(fog,x0,y0,x1,y1,visibility);
+            fabsf(t->min_x)>1000000||fabsf(t->min_y)>1000000||
+            fabsf(t->max_x)>1000000||fabsf(t->max_y)>1000000||
+            t->max_x<=t->min_x||t->max_y<=t->min_y||
+            !t->columns||!t->rows||t->columns>32||t->rows>32) return 0;
+        for(unsigned corner=0;corner<4;++corner) {
+            float u,v;project(corner&1?t->max_x:t->min_x,corner&2?t->max_y:t->min_y,&u,&v);
+            min_u=fminf(min_u,u);max_u=fmaxf(max_u,u);
+            min_v=fminf(min_v,v);max_v=fmaxf(max_v,v);
         }
     }
-    if(fog)terrain(rgba,fog,&p,nav);
-    free(fog);
-    if (v->pinned) {
-        const int x=sx(&p,v->pin_x), y=sy(&p,v->pin_y);
-        circle(rgba,x,y-12,13,0x141410);circle(rgba,x,y-12,10,0xDAA759);
-        for (int row=0;row<12;row++) box(rgba,x-6+row/2,y-5+row,x+7-row/2,y-4+row,0xDAA759);
-        circle(rgba,x,y-12,3,0x141410);
+    if (!isfinite(min_u)) {
+        float u,v; project(d->x,d->y,&u,&v);
+        min_u=u-90;max_u=u+90;min_v=v-45;max_v=v+45;
     }
-    const int px=sx(&p,d->x),py=sy(&p,d->y);
-    circle(rgba,px,py,12,0x141410);circle(rgba,px,py,8,0xF1EBDD);
-    circle(rgba,px,py,3,0xD7B574);
+    p->u=(min_u+max_u)*0.5f; p->v=(min_v+max_v)*0.5f;
+    p->scale=fminf(MAP_IMAGE_WIDTH/(max_u-min_u+40),MAP_IMAGE_HEIGHT/(max_v-min_v+40));
+    return isfinite(p->scale)&&p->scale>0;
+}
+static void pixel(uint8_t *p,size_t i,uint32_t color) {
+    p+=i*4; p[0]=(uint8_t)(color>>16);p[1]=(uint8_t)(color>>8);p[2]=(uint8_t)color;p[3]=255;
+}
+/* All four corners matter after rotation. Clamp before converting to integers. */
+static void bounds(const MapProjection *p,const float x[4],const float y[4],int out[4]) {
+    float x0=MAP_IMAGE_WIDTH,y0=MAP_IMAGE_HEIGHT,x1=0,y1=0;
+    for(unsigned i=0;i<4;++i) {
+        float px,py;map_view_point(p,x[i],y[i],&px,&py);
+        x0=fminf(x0,px);x1=fmaxf(x1,px);y0=fminf(y0,py);y1=fmaxf(y1,py);
+    }
+    out[0]=(int)fmaxf(0,fminf(MAP_IMAGE_WIDTH-1,floorf(x0)));
+    out[1]=(int)fmaxf(0,fminf(MAP_IMAGE_HEIGHT-1,floorf(y0)));
+    out[2]=(int)fmaxf(0,fminf(MAP_IMAGE_WIDTH-1,ceilf(x1)));
+    out[3]=(int)fmaxf(0,fminf(MAP_IMAGE_HEIGHT-1,ceilf(y1)));
+}
+static void reveal(uint8_t *fog,const MapProbeResult *d,const MapProjection *p) {
+    if (!d->exploration_available) return;
+    for(unsigned i=0;i<d->tile_count;++i) {
+        const MapExplorationTile *t=&d->tiles[i];
+        const float xs[4]={t->min_x,t->max_x,t->min_x,t->max_x};
+        const float ys[4]={t->min_y,t->min_y,t->max_y,t->max_y};
+        int b[4];bounds(p,xs,ys,b);
+        const float cw=t->columns/(t->max_x-t->min_x),rh=t->rows/(t->max_y-t->min_y);
+        for(int y=b[1];y<=b[3];++y) for(int x=b[0];x<=b[2];++x) {
+            float wx,wy;unproject(p,x+0.5f,y+0.5f,&wx,&wy);
+            if(wx<t->min_x||wx>=t->max_x||wy<t->min_y||wy>=t->max_y)continue;
+            const unsigned shade=map_cell_visibility(t,(unsigned)((wx-t->min_x)*cw),
+                                                       (unsigned)((wy-t->min_y)*rh));
+            uint8_t *at=&fog[(size_t)y*MAP_IMAGE_WIDTH+(unsigned)x];
+            if(*at<shade)*at=(uint8_t)shade;
+        }
+    }
+}
+static void terrain(uint8_t *ground,const uint8_t *fog,const MapProjection *p,const NavProbeResult *nav) {
+    for(unsigned n=0;n<nav->grid_count;++n) {
+        const NavTerrainGrid *g=&nav->grids[n];
+        const float det=g->axis_x_x*g->axis_y_y-g->axis_x_y*g->axis_y_x;
+        if(!g->columns||!g->rows||g->columns>512||g->rows>512||
+           g->cell_offset>nav->cell_count||(uint32_t)g->columns*g->rows>nav->cell_count-g->cell_offset||
+           !isfinite(g->origin_x)||!isfinite(g->origin_y)||fabsf(g->origin_x)>1000000||fabsf(g->origin_y)>1000000||
+           !isfinite(g->axis_x_x)||!isfinite(g->axis_x_y)||!isfinite(g->axis_y_x)||!isfinite(g->axis_y_y)||
+           fabsf(g->axis_x_x)>2.51f||fabsf(g->axis_x_y)>2.51f||fabsf(g->axis_y_x)>2.51f||fabsf(g->axis_y_y)>2.51f||
+           !isfinite(det)||fabsf(det)<0.001f)continue;
+        float xs[4],ys[4];
+        for(unsigned corner=0;corner<4;++corner) {
+            const float c=corner&1?g->columns:0,r=corner&2?g->rows:0;
+            xs[corner]=g->origin_x+c*g->axis_x_x+r*g->axis_y_x;
+            ys[corner]=g->origin_y+c*g->axis_x_y+r*g->axis_y_y;
+        }
+        int b[4];bounds(p,xs,ys,b);
+        for(int y=b[1];y<=b[3];++y) for(int x=b[0];x<=b[2];++x) {
+            const size_t at=(size_t)y*MAP_IMAGE_WIDTH+(unsigned)x;
+            if(!fog[at])continue;
+            float wx,wy;unproject(p,x+0.5f,y+0.5f,&wx,&wy);
+            const float dx=wx-g->origin_x,dy=wy-g->origin_y;
+            const float column=(dx*g->axis_y_y-dy*g->axis_y_x)/det;
+            const float row=(dy*g->axis_x_x-dx*g->axis_x_y)/det;
+            if(!isfinite(column)||!isfinite(row)||column<0||row<0||column>=g->columns||row>=g->rows)continue;
+            if(nav_cell_ground(nav,n,(unsigned)column,(unsigned)row))ground[at]=fog[at];
+        }
+    }
+}
+int map_view_render(const MapView *v,uint8_t *rgba,size_t size) {
+    MapProjection p;
+    if(!rgba||size!=MAP_IMAGE_BYTES||!map_view_projection(v,&p)||
+       !isfinite(v->zoom)||v->zoom<0.5f||v->zoom>8||
+       (v->pinned&&(!isfinite(v->pin_x)||!isfinite(v->pin_y))))return 0;
+    const size_t count=MAP_IMAGE_WIDTH*MAP_IMAGE_HEIGHT;
+    uint8_t *fog=calloc(count,1),*ground=calloc(count,1);
+    if(!fog||!ground){free(fog);free(ground);return 0;}
+    reveal(fog,&v->data,&p);
+    const NavProbeResult *n=&v->navigation;
+    const int has_terrain=n->available&&n->shared_identity_valid&&n->world_id==v->data.world_id&&
+        n->grid_count<=NAV_MAX_GRIDS&&n->cell_count<=NAV_MAX_CELLS&&v->data.exploration_available;
+    if(has_terrain)terrain(ground,fog,&p,n);
+    for(unsigned y=0;y<MAP_IMAGE_HEIGHT;++y)for(unsigned x=0;x<MAP_IMAGE_WIDTH;++x) {
+        const size_t at=(size_t)y*MAP_IMAGE_WIDTH+x;
+        uint32_t ink=0x141410;
+        if(has_terrain&&ground[at]) {
+            const unsigned s=ground[at];
+            const int edge=x<1||y<1||x+1>=MAP_IMAGE_WIDTH||y+1>=MAP_IMAGE_HEIGHT||
+                !ground[at-1]||!ground[at+1]||!ground[at-MAP_IMAGE_WIDTH]||!ground[at+MAP_IMAGE_WIDTH];
+            ink=edge?(s==2?0xAD9566:0x655A42):(s==2?0x24221C:0x1C1B16);
+        } else if(!has_terrain&&fog[at]) ink=fog[at]==2?0x24221C:0x1C1B16;
+        pixel(rgba,at,ink);
+    }
+    free(fog);free(ground);
+    /* Player, pin and viewport are native map transforms, never baked here. */
     return 1;
 }
