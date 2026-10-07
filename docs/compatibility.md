@@ -26,7 +26,7 @@
 | Fresh candidate matched values | Barbarian level 2 / armor 31 and Wizard level 1 / armor 16; both matched attacks per second 1.20, cooldown reduction 0.00% and movement +0% in the game menus |
 | Fresh candidate controlled stat change | Barbarian axe removal/restoration matched attacks per second 1.20 → 1.00 → 1.20; axe restored |
 | Fresh candidate matched skills | Bash, Hammer of the Ancients and Magic Missile/no-rune matched Skills; Wizard's five empty/locked slots matched. Clearing/restoring Hammer and Magic Missile changed their rows to Unassigned and back |
-| Fresh candidate physical controls | +/Y and ordinary game skill clear/restore actions worked; lower-page navigation left the game's Skills selection unchanged. Broader input coverage pending |
+| Fresh candidate input checks | The owner used physical +/Y; automated ordinary game skill clear/restore actions also worked; lower-page navigation left the game's Skills selection unchanged. Broader input coverage pending |
 | Fresh candidate normal quit | Main-menu return cleared level, all four stats and all six skill rows |
 | Fresh candidate suspend | 108.47 seconds screen-off; both displays black. Eden was paused on wake with the lower display black; Resume restored Wizard level 1, stats and Magic Missile |
 | Fresh candidate repeat launch | Barbarian level/stat values and displayed skills returned after a second fresh enabled launch |
