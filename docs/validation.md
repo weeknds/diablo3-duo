@@ -22,12 +22,15 @@ walking the marker stayed near the panel center; the map and fixed-location
 pin moved relative to it. After dragging, zoom returned the view to following.
 The normal hidden game touch controls were restored.
 
-The clip and screenshot use the final module and visual parameters **before**
-the final manifest-only `gpu_composite: true` setting. The Thor disconnected
-before that setting could be installed. Its native-runtime behavior is verified
-from the pinned upstream source, but final GPU rendering on this device remains
-**UNVERIFIED**. The shipped screenshot shows that distinction; it is not a claim
-that the final GPU package completed the device check.
+The clip and published screenshot use the final module and visual parameters
+**before** the final manifest-only `gpu_composite: true` setting. After the Thor
+reconnected, the final archive was installed through Eden's installer. Device
+readback matched the release manifest, including that flag, and module hash.
+Diablo was relaunched in DuoTest; terrain and the centered player marker rendered
+in New Tristram with the GPU setting enabled. The touch overlay was restored to
+hidden and the Map page left open. Installation and rendering are confirmed;
+GPU movement smoothness was not measured or separately recorded. No additional
+movement benchmark or broad test cycle was run.
 
 A CPU redraw path was identified and the final package opts into GPU map quads.
 The recording is a short functional check, not a frame-rate benchmark. No 30/60
@@ -47,7 +50,8 @@ checks. No unrelated benchmark or extended lifecycle loop was restarted.
 
 Private evidence: `private/device-20261007/map-motion-0.2.1.mp4`,
 `map-motion-events.json`, `map-motion-frames/frames.json`,
-`map-fix-receipt.json`, and `lower-map-fix-final.png`. Public source contains only
+`map-fix-receipt.json`, `gpu-install-receipt.json`,
+`lower-gpu-installed-final.png`, and `lower-map-fix-final.png`. Public source contains only
 the companion screenshot, not game captures or private data.
 
 ---

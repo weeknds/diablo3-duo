@@ -33,10 +33,12 @@ Terrain outlines are thinner and the default view shows more surroundings.
 See the dated movement evidence in validation.md; this is not a new broad
 performance or compatibility test.
 
-The final package additionally enables Eden's GPU map compositor. The Thor
-was disconnected before this manifest-only setting could be installed. The
-motion check and screenshot verify the module using the CPU path; finishing
-GPU installation/confirmation is the outstanding device step.
+The final package additionally enables Eden's GPU map compositor. After the
+Thor reconnected, it was installed through Eden's installer. Device readback
+matched the release manifest and module, including `gpu_composite: true`.
+Diablo was relaunched in DuoTest and the map rendered in New Tristram. The game
+touch overlay was restored to hidden and the Map page left open. The earlier
+motion recording uses the CPU path; no second movement benchmark was run.
 
 ## Limits and future work
 

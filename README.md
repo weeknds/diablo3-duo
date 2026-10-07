@@ -32,7 +32,8 @@ Download [v0.2.1-dev](https://github.com/weeknds/diablo3-duo/releases/tag/v0.2.1
 ## On the Thor
 
 Actual companion screenshots from the lower display. The 0.2.1 map capture
-precedes the final GPU-compositor setting; its device confirmation is pending:
+precedes the final GPU-compositor setting. The final package is now installed
+and its map rendered on the Thor; see the validation record for the limits:
 
 | Character | Equipment |
 | --- | --- |
