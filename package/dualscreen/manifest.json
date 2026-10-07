@@ -1,41 +1,156 @@
 {
   "format": 1,
-  "name": "Diablo III Duo - Development Preview",
+  "name": "Diablo III Duo - Design Preview",
   "title_id": "01001B300B9BE000",
   "min_runtime": 18,
   "canvas_w": 1240,
   "canvas_h": 1080,
-  "background": "#FF11100F",
+  "background": "#FF11110E",
   "nav": false,
+  "requires_module": false,
+  "font": "file:assets/duo-sans.mfnt",
+  "font_atlas": "file:assets/duo-sans.png",
+  "actions": {
+    "open_combat": {
+      "kind": "page",
+      "page": "combat"
+    },
+    "open_map": {
+      "kind": "page",
+      "page": "map"
+    },
+    "open_character": {
+      "kind": "page",
+      "page": "character"
+    }
+  },
   "pages": [
     {
-      "id": "development",
-      "title": "Development preview",
+      "id": "character",
+      "title": "Character",
       "widgets": [
+        {
+          "type": "image",
+          "rect": [
+            39,
+            20,
+            40,
+            40
+          ],
+          "src": "file:assets/icon-combat.png",
+          "tint": "#FFD7B574"
+        },
+        {
+          "type": "image",
+          "rect": [
+            98,
+            27,
+            229,
+            25
+          ],
+          "src": "file:assets/brand.png"
+        },
         {
           "type": "rect",
           "rect": [
-            72,
-            66,
-            64,
-            6
+            988,
+            22,
+            208,
+            40
           ],
-          "bg": "#FFAA6F6B",
-          "color": 0,
-          "frame": 0
+          "bg": "#FF191813",
+          "color": "#FF49412E",
+          "frame": 1
         },
         {
           "type": "label",
           "rect": [
-            72,
-            104,
+            1010,
+            32,
             0,
             0
           ],
-          "text": "DIABLO III DUO",
-          "text_scale": 6,
-          "color": "#FFF1E9DC",
-          "wrap_width": 1096,
+          "text": "DESIGN PREVIEW",
+          "text_scale": 3,
+          "color": "#FFBDB4A0",
+          "wrap_width": 174,
+          "max_lines": 1,
+          "fit_text": true,
+          "text_min_scale": 3,
+          "id": "preview_badge"
+        },
+        {
+          "type": "rect",
+          "rect": [
+            0,
+            83,
+            1240,
+            1
+          ],
+          "bg": "#FF49412E",
+          "color": 0,
+          "frame": 0
+        },
+        {
+          "type": "rect",
+          "rect": [
+            0,
+            980,
+            1240,
+            100
+          ],
+          "bg": "#FF11110E",
+          "color": 0,
+          "frame": 0
+        },
+        {
+          "type": "rect",
+          "rect": [
+            0,
+            980,
+            1240,
+            1
+          ],
+          "bg": "#FF49412E",
+          "color": 0,
+          "frame": 0
+        },
+        {
+          "type": "rect",
+          "rect": [
+            0,
+            982,
+            413,
+            98
+          ],
+          "bg": "#FF11110E",
+          "color": 0,
+          "frame": 0,
+          "on_tap": "open_combat"
+        },
+        {
+          "type": "image",
+          "rect": [
+            117,
+            1011,
+            38,
+            38
+          ],
+          "src": "file:assets/icon-combat.png",
+          "tint": "#FFBDB4A0"
+        },
+        {
+          "type": "label",
+          "rect": [
+            171,
+            1018,
+            0,
+            0
+          ],
+          "text": "Combat",
+          "text_scale": 5,
+          "color": "#FFBDB4A0",
+          "wrap_width": 225,
           "max_lines": 1,
           "fit_text": true,
           "text_min_scale": 5
@@ -43,40 +158,133 @@
         {
           "type": "rect",
           "rect": [
-            72,
-            194,
-            1096,
-            84
+            413,
+            982,
+            413,
+            98
           ],
-          "bg": "#FF2B1C1D",
+          "bg": "#FF11110E",
           "color": 0,
-          "frame": 0
+          "frame": 0,
+          "on_tap": "open_map"
         },
         {
-          "type": "rect",
+          "type": "image",
           "rect": [
-            72,
-            194,
-            6,
-            84
+            558,
+            1011,
+            38,
+            38
           ],
-          "bg": "#FFAA6F6B",
-          "color": 0,
-          "frame": 0
+          "src": "file:assets/icon-map.png",
+          "tint": "#FFBDB4A0"
         },
         {
           "type": "label",
           "rect": [
-            100,
-            194,
+            612,
+            1018,
             0,
             0
           ],
-          "text": "DEVELOPMENT PREVIEW",
+          "text": "Map",
           "text_scale": 5,
-          "text_center_h": 84,
-          "color": "#FFE7B0AB",
-          "wrap_width": 1040,
+          "color": "#FFBDB4A0",
+          "wrap_width": 225,
+          "max_lines": 1,
+          "fit_text": true,
+          "text_min_scale": 5
+        },
+        {
+          "type": "rect",
+          "rect": [
+            826,
+            982,
+            414,
+            98
+          ],
+          "bg": "#FF242117",
+          "color": 0,
+          "frame": 0,
+          "on_tap": "open_character"
+        },
+        {
+          "type": "image",
+          "rect": [
+            928,
+            1011,
+            38,
+            38
+          ],
+          "src": "file:assets/icon-character.png",
+          "tint": "#FFD7B574"
+        },
+        {
+          "type": "label",
+          "rect": [
+            982,
+            1018,
+            0,
+            0
+          ],
+          "text": "Character",
+          "text_scale": 5,
+          "color": "#FFD7B574",
+          "wrap_width": 225,
+          "max_lines": 1,
+          "fit_text": true,
+          "text_min_scale": 5
+        },
+        {
+          "type": "rect",
+          "rect": [
+            868,
+            979,
+            330,
+            3
+          ],
+          "bg": "#FFD7B574",
+          "color": 0,
+          "frame": 0
+        },
+        {
+          "type": "image",
+          "rect": [
+            44,
+            119,
+            254,
+            36
+          ],
+          "src": "file:assets/character-title.png"
+        },
+        {
+          "type": "label",
+          "rect": [
+            46,
+            177,
+            0,
+            0
+          ],
+          "text": "Build details at a glance",
+          "text_scale": 5,
+          "color": "#FFBDB4A0",
+          "wrap_width": 1100,
+          "max_lines": 1,
+          "fit_text": true,
+          "text_min_scale": 5
+        },
+        {
+          "type": "label",
+          "rect": [
+            974,
+            128,
+            0,
+            0
+          ],
+          "text": "Level",
+          "text_scale": 4,
+          "color": "#FFBDB4A0",
+          "wrap_width": 106,
           "max_lines": 1,
           "fit_text": true,
           "text_min_scale": 4
@@ -84,15 +292,776 @@
         {
           "type": "label",
           "rect": [
+            1076,
+            119,
+            0,
+            0
+          ],
+          "text": "--",
+          "text_scale": 7,
+          "color": "#FFF1EBDD",
+          "wrap_width": 120,
+          "max_lines": 1,
+          "fit_text": true,
+          "text_min_scale": 5,
+          "id": "level"
+        },
+        {
+          "type": "rect",
+          "rect": [
+            44,
+            237,
+            1152,
+            338
+          ],
+          "bg": "#FF191813",
+          "color": "#FF49412E",
+          "frame": 1
+        },
+        {
+          "type": "rect",
+          "rect": [
+            620,
+            261,
+            1,
+            290
+          ],
+          "bg": "#FF49412E",
+          "color": 0,
+          "frame": 0
+        },
+        {
+          "type": "rect",
+          "rect": [
             72,
-            334,
+            406,
+            1096,
+            1
+          ],
+          "bg": "#FF49412E",
+          "color": 0,
+          "frame": 0
+        },
+        {
+          "type": "label",
+          "rect": [
+            76,
+            266,
+            0,
+            0
+          ],
+          "text": "Attacks per second",
+          "text_scale": 5,
+          "color": "#FFBDB4A0",
+          "wrap_width": 510,
+          "max_lines": 1,
+          "fit_text": true,
+          "text_min_scale": 5
+        },
+        {
+          "type": "label",
+          "rect": [
+            76,
+            321,
+            0,
+            0
+          ],
+          "text": "--",
+          "text_scale": 10,
+          "color": "#FFF1EBDD",
+          "wrap_width": 510,
+          "max_lines": 1,
+          "fit_text": true,
+          "text_min_scale": 8,
+          "id": "aps"
+        },
+        {
+          "type": "label",
+          "rect": [
+            652,
+            266,
+            0,
+            0
+          ],
+          "text": "Cooldown reduction",
+          "text_scale": 5,
+          "color": "#FFBDB4A0",
+          "wrap_width": 510,
+          "max_lines": 1,
+          "fit_text": true,
+          "text_min_scale": 5
+        },
+        {
+          "type": "label",
+          "rect": [
+            652,
+            321,
+            0,
+            0
+          ],
+          "text": "--",
+          "text_scale": 10,
+          "color": "#FFF1EBDD",
+          "wrap_width": 510,
+          "max_lines": 1,
+          "fit_text": true,
+          "text_min_scale": 8,
+          "id": "cdr"
+        },
+        {
+          "type": "label",
+          "rect": [
+            76,
+            435,
+            0,
+            0
+          ],
+          "text": "Armor",
+          "text_scale": 5,
+          "color": "#FFBDB4A0",
+          "wrap_width": 510,
+          "max_lines": 1,
+          "fit_text": true,
+          "text_min_scale": 5
+        },
+        {
+          "type": "label",
+          "rect": [
+            76,
+            490,
+            0,
+            0
+          ],
+          "text": "--",
+          "text_scale": 10,
+          "color": "#FFF1EBDD",
+          "wrap_width": 510,
+          "max_lines": 1,
+          "fit_text": true,
+          "text_min_scale": 8,
+          "id": "armor"
+        },
+        {
+          "type": "label",
+          "rect": [
+            652,
+            435,
+            0,
+            0
+          ],
+          "text": "Movement bonus",
+          "text_scale": 5,
+          "color": "#FFBDB4A0",
+          "wrap_width": 510,
+          "max_lines": 1,
+          "fit_text": true,
+          "text_min_scale": 5
+        },
+        {
+          "type": "label",
+          "rect": [
+            652,
+            490,
+            0,
+            0
+          ],
+          "text": "--",
+          "text_scale": 10,
+          "color": "#FFF1EBDD",
+          "wrap_width": 510,
+          "max_lines": 1,
+          "fit_text": true,
+          "text_min_scale": 8,
+          "id": "movement"
+        },
+        {
+          "type": "image",
+          "rect": [
+            44,
+            620,
+            257,
+            34
+          ],
+          "src": "file:assets/skills-overview.png"
+        },
+        {
+          "type": "rect",
+          "rect": [
+            968,
+            591,
+            228,
+            88
+          ],
+          "bg": "#FF242117",
+          "color": "#FF49412E",
+          "frame": 1,
+          "on_tap": "open_combat"
+        },
+        {
+          "type": "label",
+          "rect": [
+            1008,
+            623,
+            0,
+            0
+          ],
+          "text": "View skills",
+          "text_scale": 4,
+          "color": "#FFD7B574",
+          "wrap_width": 165,
+          "max_lines": 1,
+          "fit_text": true,
+          "text_min_scale": 4
+        },
+        {
+          "type": "label",
+          "rect": [
+            48,
+            700,
+            0,
+            0
+          ],
+          "text": "1",
+          "text_scale": 4,
+          "color": "#FFD7B574",
+          "wrap_width": 32,
+          "max_lines": 1,
+          "fit_text": true,
+          "text_min_scale": 4
+        },
+        {
+          "type": "label",
+          "rect": [
+            92,
+            697,
+            0,
+            0
+          ],
+          "text": "Unavailable",
+          "text_scale": 5,
+          "color": "#FFBDB4A0",
+          "wrap_width": 488,
+          "max_lines": 1,
+          "fit_text": true,
+          "text_min_scale": 4,
+          "id": "skill_0"
+        },
+        {
+          "type": "rect",
+          "rect": [
+            44,
+            742,
+            552,
+            1
+          ],
+          "bg": "#FF49412E",
+          "color": 0,
+          "frame": 0
+        },
+        {
+          "type": "label",
+          "rect": [
+            48,
+            762,
+            0,
+            0
+          ],
+          "text": "2",
+          "text_scale": 4,
+          "color": "#FFD7B574",
+          "wrap_width": 32,
+          "max_lines": 1,
+          "fit_text": true,
+          "text_min_scale": 4
+        },
+        {
+          "type": "label",
+          "rect": [
+            92,
+            759,
+            0,
+            0
+          ],
+          "text": "Unavailable",
+          "text_scale": 5,
+          "color": "#FFBDB4A0",
+          "wrap_width": 488,
+          "max_lines": 1,
+          "fit_text": true,
+          "text_min_scale": 4,
+          "id": "skill_1"
+        },
+        {
+          "type": "rect",
+          "rect": [
+            44,
+            804,
+            552,
+            1
+          ],
+          "bg": "#FF49412E",
+          "color": 0,
+          "frame": 0
+        },
+        {
+          "type": "label",
+          "rect": [
+            48,
+            824,
+            0,
+            0
+          ],
+          "text": "3",
+          "text_scale": 4,
+          "color": "#FFD7B574",
+          "wrap_width": 32,
+          "max_lines": 1,
+          "fit_text": true,
+          "text_min_scale": 4
+        },
+        {
+          "type": "label",
+          "rect": [
+            92,
+            821,
+            0,
+            0
+          ],
+          "text": "Unavailable",
+          "text_scale": 5,
+          "color": "#FFBDB4A0",
+          "wrap_width": 488,
+          "max_lines": 1,
+          "fit_text": true,
+          "text_min_scale": 4,
+          "id": "skill_2"
+        },
+        {
+          "type": "label",
+          "rect": [
+            648,
+            700,
+            0,
+            0
+          ],
+          "text": "4",
+          "text_scale": 4,
+          "color": "#FFD7B574",
+          "wrap_width": 32,
+          "max_lines": 1,
+          "fit_text": true,
+          "text_min_scale": 4
+        },
+        {
+          "type": "label",
+          "rect": [
+            692,
+            697,
+            0,
+            0
+          ],
+          "text": "Unavailable",
+          "text_scale": 5,
+          "color": "#FFBDB4A0",
+          "wrap_width": 488,
+          "max_lines": 1,
+          "fit_text": true,
+          "text_min_scale": 4,
+          "id": "skill_3"
+        },
+        {
+          "type": "rect",
+          "rect": [
+            644,
+            742,
+            552,
+            1
+          ],
+          "bg": "#FF49412E",
+          "color": 0,
+          "frame": 0
+        },
+        {
+          "type": "label",
+          "rect": [
+            648,
+            762,
+            0,
+            0
+          ],
+          "text": "5",
+          "text_scale": 4,
+          "color": "#FFD7B574",
+          "wrap_width": 32,
+          "max_lines": 1,
+          "fit_text": true,
+          "text_min_scale": 4
+        },
+        {
+          "type": "label",
+          "rect": [
+            692,
+            759,
+            0,
+            0
+          ],
+          "text": "Unavailable",
+          "text_scale": 5,
+          "color": "#FFBDB4A0",
+          "wrap_width": 488,
+          "max_lines": 1,
+          "fit_text": true,
+          "text_min_scale": 4,
+          "id": "skill_4"
+        },
+        {
+          "type": "rect",
+          "rect": [
+            644,
+            804,
+            552,
+            1
+          ],
+          "bg": "#FF49412E",
+          "color": 0,
+          "frame": 0
+        },
+        {
+          "type": "label",
+          "rect": [
+            648,
+            824,
+            0,
+            0
+          ],
+          "text": "6",
+          "text_scale": 4,
+          "color": "#FFD7B574",
+          "wrap_width": 32,
+          "max_lines": 1,
+          "fit_text": true,
+          "text_min_scale": 4
+        },
+        {
+          "type": "label",
+          "rect": [
+            692,
+            821,
+            0,
+            0
+          ],
+          "text": "Unavailable",
+          "text_scale": 5,
+          "color": "#FFBDB4A0",
+          "wrap_width": 488,
+          "max_lines": 1,
+          "fit_text": true,
+          "text_min_scale": 4,
+          "id": "skill_5"
+        },
+        {
+          "type": "rect",
+          "rect": [
+            44,
+            889,
+            1152,
+            1
+          ],
+          "bg": "#FF49412E",
+          "color": 0,
+          "frame": 0
+        },
+        {
+          "type": "label",
+          "rect": [
+            44,
+            918,
             0,
             0
           ],
           "text": "Live game data is not connected",
+          "text_scale": 4,
+          "color": "#FFBDB4A0",
+          "wrap_width": 1000,
+          "max_lines": 1,
+          "fit_text": true,
+          "text_min_scale": 4,
+          "id": "connection"
+        }
+      ]
+    },
+    {
+      "id": "combat",
+      "title": "Combat",
+      "widgets": [
+        {
+          "type": "image",
+          "rect": [
+            39,
+            20,
+            40,
+            40
+          ],
+          "src": "file:assets/icon-combat.png",
+          "tint": "#FFD7B574"
+        },
+        {
+          "type": "image",
+          "rect": [
+            98,
+            27,
+            229,
+            25
+          ],
+          "src": "file:assets/brand.png"
+        },
+        {
+          "type": "rect",
+          "rect": [
+            988,
+            22,
+            208,
+            40
+          ],
+          "bg": "#FF191813",
+          "color": "#FF49412E",
+          "frame": 1
+        },
+        {
+          "type": "label",
+          "rect": [
+            1010,
+            32,
+            0,
+            0
+          ],
+          "text": "DESIGN PREVIEW",
+          "text_scale": 3,
+          "color": "#FFBDB4A0",
+          "wrap_width": 174,
+          "max_lines": 1,
+          "fit_text": true,
+          "text_min_scale": 3,
+          "id": "preview_badge"
+        },
+        {
+          "type": "rect",
+          "rect": [
+            0,
+            83,
+            1240,
+            1
+          ],
+          "bg": "#FF49412E",
+          "color": 0,
+          "frame": 0
+        },
+        {
+          "type": "rect",
+          "rect": [
+            0,
+            980,
+            1240,
+            100
+          ],
+          "bg": "#FF11110E",
+          "color": 0,
+          "frame": 0
+        },
+        {
+          "type": "rect",
+          "rect": [
+            0,
+            980,
+            1240,
+            1
+          ],
+          "bg": "#FF49412E",
+          "color": 0,
+          "frame": 0
+        },
+        {
+          "type": "rect",
+          "rect": [
+            0,
+            982,
+            413,
+            98
+          ],
+          "bg": "#FF242117",
+          "color": 0,
+          "frame": 0,
+          "on_tap": "open_combat"
+        },
+        {
+          "type": "image",
+          "rect": [
+            117,
+            1011,
+            38,
+            38
+          ],
+          "src": "file:assets/icon-combat.png",
+          "tint": "#FFD7B574"
+        },
+        {
+          "type": "label",
+          "rect": [
+            171,
+            1018,
+            0,
+            0
+          ],
+          "text": "Combat",
           "text_scale": 5,
-          "color": "#FFF1E9DC",
-          "wrap_width": 1096,
+          "color": "#FFD7B574",
+          "wrap_width": 225,
+          "max_lines": 1,
+          "fit_text": true,
+          "text_min_scale": 5
+        },
+        {
+          "type": "rect",
+          "rect": [
+            42,
+            979,
+            330,
+            3
+          ],
+          "bg": "#FFD7B574",
+          "color": 0,
+          "frame": 0
+        },
+        {
+          "type": "rect",
+          "rect": [
+            413,
+            982,
+            413,
+            98
+          ],
+          "bg": "#FF11110E",
+          "color": 0,
+          "frame": 0,
+          "on_tap": "open_map"
+        },
+        {
+          "type": "image",
+          "rect": [
+            558,
+            1011,
+            38,
+            38
+          ],
+          "src": "file:assets/icon-map.png",
+          "tint": "#FFBDB4A0"
+        },
+        {
+          "type": "label",
+          "rect": [
+            612,
+            1018,
+            0,
+            0
+          ],
+          "text": "Map",
+          "text_scale": 5,
+          "color": "#FFBDB4A0",
+          "wrap_width": 225,
+          "max_lines": 1,
+          "fit_text": true,
+          "text_min_scale": 5
+        },
+        {
+          "type": "rect",
+          "rect": [
+            826,
+            982,
+            414,
+            98
+          ],
+          "bg": "#FF11110E",
+          "color": 0,
+          "frame": 0,
+          "on_tap": "open_character"
+        },
+        {
+          "type": "image",
+          "rect": [
+            928,
+            1011,
+            38,
+            38
+          ],
+          "src": "file:assets/icon-character.png",
+          "tint": "#FFBDB4A0"
+        },
+        {
+          "type": "label",
+          "rect": [
+            982,
+            1018,
+            0,
+            0
+          ],
+          "text": "Character",
+          "text_scale": 5,
+          "color": "#FFBDB4A0",
+          "wrap_width": 225,
+          "max_lines": 1,
+          "fit_text": true,
+          "text_min_scale": 5
+        },
+        {
+          "type": "image",
+          "rect": [
+            44,
+            119,
+            308,
+            36
+          ],
+          "src": "file:assets/combat-title.png"
+        },
+        {
+          "type": "label",
+          "rect": [
+            46,
+            177,
+            0,
+            0
+          ],
+          "text": "Equipped skills and their selected runes",
+          "text_scale": 5,
+          "color": "#FFBDB4A0",
+          "wrap_width": 1100,
+          "max_lines": 1,
+          "fit_text": true,
+          "text_min_scale": 5
+        },
+        {
+          "type": "rect",
+          "rect": [
+            44,
+            247,
+            552,
+            122
+          ],
+          "bg": "#FF191813",
+          "color": "#FF49412E",
+          "frame": 1
+        },
+        {
+          "type": "label",
+          "rect": [
+            68,
+            276,
+            0,
+            0
+          ],
+          "text": "1",
+          "text_scale": 4,
+          "color": "#FFD7B574",
+          "wrap_width": 32,
           "max_lines": 1,
           "fit_text": true,
           "text_min_scale": 4
@@ -100,189 +1069,735 @@
         {
           "type": "label",
           "rect": [
-            72,
-            398,
+            120,
+            272,
             0,
             0
           ],
-          "text": "This screen is a static layout preview.",
-          "text_scale": 4,
-          "color": "#FFB9AEA0",
-          "wrap_width": 1096,
+          "text": "Unavailable",
+          "text_scale": 5,
+          "color": "#FFF1EBDD",
+          "wrap_width": 452,
           "max_lines": 1,
           "fit_text": true,
-          "text_min_scale": 3
-        },
-        {
-          "type": "rect",
-          "rect": [
-            72,
-            484,
-            1096,
-            358
-          ],
-          "bg": "#FF191716",
-          "color": 0,
-          "frame": 0
+          "text_min_scale": 4,
+          "id": "skill_0"
         },
         {
           "type": "label",
           "rect": [
-            100,
-            512,
+            120,
+            320,
             0,
             0
           ],
-          "text": "PLANNED READOUTS",
-          "text_scale": 3,
-          "color": "#FFB9AEA0",
-          "wrap_width": 1040,
+          "text": "Rune unavailable",
+          "text_scale": 4,
+          "color": "#FFBDB4A0",
+          "wrap_width": 452,
           "max_lines": 1,
           "fit_text": true,
-          "text_min_scale": 3
+          "text_min_scale": 4,
+          "id": "rune_0"
+        },
+        {
+          "type": "rect",
+          "rect": [
+            44,
+            387,
+            552,
+            122
+          ],
+          "bg": "#FF191813",
+          "color": "#FF49412E",
+          "frame": 1
         },
         {
           "type": "label",
           "rect": [
-            100,
-            574,
+            68,
+            416,
             0,
             0
           ],
-          "text": "Health",
+          "text": "2",
           "text_scale": 4,
-          "color": "#FFDDD2C1",
-          "wrap_width": 880,
+          "color": "#FFD7B574",
+          "wrap_width": 32,
           "max_lines": 1,
           "fit_text": true,
-          "text_min_scale": 3
+          "text_min_scale": 4
         },
         {
-          "type": "rect",
+          "type": "label",
           "rect": [
-            1088,
-            586,
-            48,
-            4
+            120,
+            412,
+            0,
+            0
           ],
-          "bg": "#FFB9AEA0",
-          "color": 0,
-          "frame": 0
+          "text": "Unavailable",
+          "text_scale": 5,
+          "color": "#FFF1EBDD",
+          "wrap_width": 452,
+          "max_lines": 1,
+          "fit_text": true,
+          "text_min_scale": 4,
+          "id": "skill_1"
+        },
+        {
+          "type": "label",
+          "rect": [
+            120,
+            460,
+            0,
+            0
+          ],
+          "text": "Rune unavailable",
+          "text_scale": 4,
+          "color": "#FFBDB4A0",
+          "wrap_width": 452,
+          "max_lines": 1,
+          "fit_text": true,
+          "text_min_scale": 4,
+          "id": "rune_1"
         },
         {
           "type": "rect",
           "rect": [
-            100,
-            636,
-            1040,
+            44,
+            527,
+            552,
+            122
+          ],
+          "bg": "#FF191813",
+          "color": "#FF49412E",
+          "frame": 1
+        },
+        {
+          "type": "label",
+          "rect": [
+            68,
+            556,
+            0,
+            0
+          ],
+          "text": "3",
+          "text_scale": 4,
+          "color": "#FFD7B574",
+          "wrap_width": 32,
+          "max_lines": 1,
+          "fit_text": true,
+          "text_min_scale": 4
+        },
+        {
+          "type": "label",
+          "rect": [
+            120,
+            552,
+            0,
+            0
+          ],
+          "text": "Unavailable",
+          "text_scale": 5,
+          "color": "#FFF1EBDD",
+          "wrap_width": 452,
+          "max_lines": 1,
+          "fit_text": true,
+          "text_min_scale": 4,
+          "id": "skill_2"
+        },
+        {
+          "type": "label",
+          "rect": [
+            120,
+            600,
+            0,
+            0
+          ],
+          "text": "Rune unavailable",
+          "text_scale": 4,
+          "color": "#FFBDB4A0",
+          "wrap_width": 452,
+          "max_lines": 1,
+          "fit_text": true,
+          "text_min_scale": 4,
+          "id": "rune_2"
+        },
+        {
+          "type": "rect",
+          "rect": [
+            644,
+            247,
+            552,
+            122
+          ],
+          "bg": "#FF191813",
+          "color": "#FF49412E",
+          "frame": 1
+        },
+        {
+          "type": "label",
+          "rect": [
+            668,
+            276,
+            0,
+            0
+          ],
+          "text": "4",
+          "text_scale": 4,
+          "color": "#FFD7B574",
+          "wrap_width": 32,
+          "max_lines": 1,
+          "fit_text": true,
+          "text_min_scale": 4
+        },
+        {
+          "type": "label",
+          "rect": [
+            720,
+            272,
+            0,
+            0
+          ],
+          "text": "Unavailable",
+          "text_scale": 5,
+          "color": "#FFF1EBDD",
+          "wrap_width": 452,
+          "max_lines": 1,
+          "fit_text": true,
+          "text_min_scale": 4,
+          "id": "skill_3"
+        },
+        {
+          "type": "label",
+          "rect": [
+            720,
+            320,
+            0,
+            0
+          ],
+          "text": "Rune unavailable",
+          "text_scale": 4,
+          "color": "#FFBDB4A0",
+          "wrap_width": 452,
+          "max_lines": 1,
+          "fit_text": true,
+          "text_min_scale": 4,
+          "id": "rune_3"
+        },
+        {
+          "type": "rect",
+          "rect": [
+            644,
+            387,
+            552,
+            122
+          ],
+          "bg": "#FF191813",
+          "color": "#FF49412E",
+          "frame": 1
+        },
+        {
+          "type": "label",
+          "rect": [
+            668,
+            416,
+            0,
+            0
+          ],
+          "text": "5",
+          "text_scale": 4,
+          "color": "#FFD7B574",
+          "wrap_width": 32,
+          "max_lines": 1,
+          "fit_text": true,
+          "text_min_scale": 4
+        },
+        {
+          "type": "label",
+          "rect": [
+            720,
+            412,
+            0,
+            0
+          ],
+          "text": "Unavailable",
+          "text_scale": 5,
+          "color": "#FFF1EBDD",
+          "wrap_width": 452,
+          "max_lines": 1,
+          "fit_text": true,
+          "text_min_scale": 4,
+          "id": "skill_4"
+        },
+        {
+          "type": "label",
+          "rect": [
+            720,
+            460,
+            0,
+            0
+          ],
+          "text": "Rune unavailable",
+          "text_scale": 4,
+          "color": "#FFBDB4A0",
+          "wrap_width": 452,
+          "max_lines": 1,
+          "fit_text": true,
+          "text_min_scale": 4,
+          "id": "rune_4"
+        },
+        {
+          "type": "rect",
+          "rect": [
+            644,
+            527,
+            552,
+            122
+          ],
+          "bg": "#FF191813",
+          "color": "#FF49412E",
+          "frame": 1
+        },
+        {
+          "type": "label",
+          "rect": [
+            668,
+            556,
+            0,
+            0
+          ],
+          "text": "6",
+          "text_scale": 4,
+          "color": "#FFD7B574",
+          "wrap_width": 32,
+          "max_lines": 1,
+          "fit_text": true,
+          "text_min_scale": 4
+        },
+        {
+          "type": "label",
+          "rect": [
+            720,
+            552,
+            0,
+            0
+          ],
+          "text": "Unavailable",
+          "text_scale": 5,
+          "color": "#FFF1EBDD",
+          "wrap_width": 452,
+          "max_lines": 1,
+          "fit_text": true,
+          "text_min_scale": 4,
+          "id": "skill_5"
+        },
+        {
+          "type": "label",
+          "rect": [
+            720,
+            600,
+            0,
+            0
+          ],
+          "text": "Rune unavailable",
+          "text_scale": 4,
+          "color": "#FFBDB4A0",
+          "wrap_width": 452,
+          "max_lines": 1,
+          "fit_text": true,
+          "text_min_scale": 4,
+          "id": "rune_5"
+        },
+        {
+          "type": "image",
+          "rect": [
+            44,
+            709,
+            263,
+            26
+          ],
+          "src": "file:assets/rune-effects-title.png"
+        },
+        {
+          "type": "label",
+          "rect": [
+            46,
+            776,
+            0,
+            0
+          ],
+          "text": "Rune descriptions and active buff timers",
+          "text_scale": 4,
+          "color": "#FFBDB4A0",
+          "wrap_width": 1100,
+          "max_lines": 1,
+          "fit_text": true,
+          "text_min_scale": 4
+        },
+        {
+          "type": "label",
+          "rect": [
+            46,
+            817,
+            0,
+            0
+          ],
+          "text": "are not available in this preview.",
+          "text_scale": 4,
+          "color": "#FFBDB4A0",
+          "wrap_width": 1100,
+          "max_lines": 1,
+          "fit_text": true,
+          "text_min_scale": 4
+        },
+        {
+          "type": "rect",
+          "rect": [
+            44,
+            889,
+            1152,
             1
           ],
-          "bg": "#FF38312D",
+          "bg": "#FF49412E",
           "color": 0,
           "frame": 0
         },
         {
           "type": "label",
           "rect": [
-            100,
-            666,
+            44,
+            918,
             0,
             0
           ],
-          "text": "Class resource",
+          "text": "Live game data is not connected",
           "text_scale": 4,
-          "color": "#FFDDD2C1",
-          "wrap_width": 880,
+          "color": "#FFBDB4A0",
+          "wrap_width": 1000,
           "max_lines": 1,
           "fit_text": true,
-          "text_min_scale": 3
-        },
+          "text_min_scale": 4,
+          "id": "connection"
+        }
+      ]
+    },
+    {
+      "id": "map",
+      "title": "Map",
+      "widgets": [
         {
-          "type": "rect",
+          "type": "image",
           "rect": [
-            1088,
-            678,
-            48,
-            4
+            39,
+            20,
+            40,
+            40
           ],
-          "bg": "#FFB9AEA0",
-          "color": 0,
-          "frame": 0
+          "src": "file:assets/icon-combat.png",
+          "tint": "#FFD7B574"
+        },
+        {
+          "type": "image",
+          "rect": [
+            98,
+            27,
+            229,
+            25
+          ],
+          "src": "file:assets/brand.png"
         },
         {
           "type": "rect",
           "rect": [
-            100,
-            728,
-            1040,
+            988,
+            22,
+            208,
+            40
+          ],
+          "bg": "#FF191813",
+          "color": "#FF49412E",
+          "frame": 1
+        },
+        {
+          "type": "label",
+          "rect": [
+            1010,
+            32,
+            0,
+            0
+          ],
+          "text": "DESIGN PREVIEW",
+          "text_scale": 3,
+          "color": "#FFBDB4A0",
+          "wrap_width": 174,
+          "max_lines": 1,
+          "fit_text": true,
+          "text_min_scale": 3,
+          "id": "preview_badge"
+        },
+        {
+          "type": "rect",
+          "rect": [
+            0,
+            83,
+            1240,
             1
           ],
-          "bg": "#FF38312D",
+          "bg": "#FF49412E",
           "color": 0,
           "frame": 0
-        },
-        {
-          "type": "label",
-          "rect": [
-            100,
-            758,
-            0,
-            0
-          ],
-          "text": "Equipped skills",
-          "text_scale": 4,
-          "color": "#FFDDD2C1",
-          "wrap_width": 880,
-          "max_lines": 1,
-          "fit_text": true,
-          "text_min_scale": 3
         },
         {
           "type": "rect",
           "rect": [
-            1088,
-            770,
-            48,
-            4
+            0,
+            980,
+            1240,
+            100
           ],
-          "bg": "#FFB9AEA0",
+          "bg": "#FF11110E",
+          "color": 0,
+          "frame": 0
+        },
+        {
+          "type": "rect",
+          "rect": [
+            0,
+            980,
+            1240,
+            1
+          ],
+          "bg": "#FF49412E",
+          "color": 0,
+          "frame": 0
+        },
+        {
+          "type": "rect",
+          "rect": [
+            0,
+            982,
+            413,
+            98
+          ],
+          "bg": "#FF11110E",
+          "color": 0,
+          "frame": 0,
+          "on_tap": "open_combat"
+        },
+        {
+          "type": "image",
+          "rect": [
+            117,
+            1011,
+            38,
+            38
+          ],
+          "src": "file:assets/icon-combat.png",
+          "tint": "#FFBDB4A0"
+        },
+        {
+          "type": "label",
+          "rect": [
+            171,
+            1018,
+            0,
+            0
+          ],
+          "text": "Combat",
+          "text_scale": 5,
+          "color": "#FFBDB4A0",
+          "wrap_width": 225,
+          "max_lines": 1,
+          "fit_text": true,
+          "text_min_scale": 5
+        },
+        {
+          "type": "rect",
+          "rect": [
+            413,
+            982,
+            413,
+            98
+          ],
+          "bg": "#FF242117",
+          "color": 0,
+          "frame": 0,
+          "on_tap": "open_map"
+        },
+        {
+          "type": "image",
+          "rect": [
+            558,
+            1011,
+            38,
+            38
+          ],
+          "src": "file:assets/icon-map.png",
+          "tint": "#FFD7B574"
+        },
+        {
+          "type": "label",
+          "rect": [
+            612,
+            1018,
+            0,
+            0
+          ],
+          "text": "Map",
+          "text_scale": 5,
+          "color": "#FFD7B574",
+          "wrap_width": 225,
+          "max_lines": 1,
+          "fit_text": true,
+          "text_min_scale": 5
+        },
+        {
+          "type": "rect",
+          "rect": [
+            455,
+            979,
+            330,
+            3
+          ],
+          "bg": "#FFD7B574",
+          "color": 0,
+          "frame": 0
+        },
+        {
+          "type": "rect",
+          "rect": [
+            826,
+            982,
+            414,
+            98
+          ],
+          "bg": "#FF11110E",
+          "color": 0,
+          "frame": 0,
+          "on_tap": "open_character"
+        },
+        {
+          "type": "image",
+          "rect": [
+            928,
+            1011,
+            38,
+            38
+          ],
+          "src": "file:assets/icon-character.png",
+          "tint": "#FFBDB4A0"
+        },
+        {
+          "type": "label",
+          "rect": [
+            982,
+            1018,
+            0,
+            0
+          ],
+          "text": "Character",
+          "text_scale": 5,
+          "color": "#FFBDB4A0",
+          "wrap_width": 225,
+          "max_lines": 1,
+          "fit_text": true,
+          "text_min_scale": 5
+        },
+        {
+          "type": "image",
+          "rect": [
+            44,
+            119,
+            94,
+            36
+          ],
+          "src": "file:assets/map-title.png"
+        },
+        {
+          "type": "label",
+          "rect": [
+            46,
+            177,
+            0,
+            0
+          ],
+          "text": "Location details",
+          "text_scale": 5,
+          "color": "#FFBDB4A0",
+          "wrap_width": 1100,
+          "max_lines": 1,
+          "fit_text": true,
+          "text_min_scale": 5
+        },
+        {
+          "type": "image",
+          "rect": [
+            572,
+            386,
+            96,
+            96
+          ],
+          "src": "file:assets/icon-map.png",
+          "tint": "#FFBDB4A0"
+        },
+        {
+          "type": "image",
+          "rect": [
+            464,
+            535,
+            311,
+            29
+          ],
+          "src": "file:assets/map-unavailable.png"
+        },
+        {
+          "type": "label",
+          "rect": [
+            346,
+            611,
+            0,
+            0
+          ],
+          "text": "Map support is not included in this preview.",
+          "text_scale": 4,
+          "color": "#FFBDB4A0",
+          "wrap_width": 548,
+          "max_lines": 1,
+          "fit_text": true,
+          "text_min_scale": 4
+        },
+        {
+          "type": "rect",
+          "rect": [
+            44,
+            889,
+            1152,
+            1
+          ],
+          "bg": "#FF49412E",
           "color": 0,
           "frame": 0
         },
         {
           "type": "label",
           "rect": [
-            72,
-            906,
+            44,
+            918,
             0,
             0
           ],
-          "text": "NEXT MILESTONE",
-          "text_scale": 3,
-          "color": "#FFB9AEA0",
-          "wrap_width": 1096,
-          "max_lines": 1,
-          "fit_text": true,
-          "text_min_scale": 3
-        },
-        {
-          "type": "label",
-          "rect": [
-            72,
-            952,
-            0,
-            0
-          ],
-          "text": "Verify the package on a real AYN Thor.",
+          "text": "Live game data is not connected",
           "text_scale": 4,
-          "color": "#FFDDD2C1",
-          "wrap_width": 1096,
+          "color": "#FFBDB4A0",
+          "wrap_width": 1000,
           "max_lines": 1,
           "fit_text": true,
-          "text_min_scale": 3
+          "text_min_scale": 4,
+          "id": "connection"
         }
       ]
     }
-  ],
-  "requires_module": false
+  ]
 }

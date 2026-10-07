@@ -30,6 +30,9 @@ jobs:
           python-version: ${{ matrix.python }}
       - name: Run synthetic tooling tests
         run: python3 -m unittest discover -s tests -v
+      - name: Check native reader and live package contracts
+        if: matrix.os == 'ubuntu-latest' && matrix.python == '3.14'
+        run: python3 native/test.py
       - name: Check explicit public source inventory
         run: |
           python3 - <<'PY'

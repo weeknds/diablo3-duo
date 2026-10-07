@@ -1,0 +1,26 @@
+{
+  "retrieved": "2026-10-06",
+  "files": {
+    "dsmod_module_abi.h": {
+      "repository": "https://github.com/igawa6/eden-duo",
+      "commit": "5410366938b8aa0aca2c9c61f4e93038b71db90c",
+      "source": "src/core/mods/dsmod_module_abi.h",
+      "url": "https://raw.githubusercontent.com/igawa6/eden-duo/5410366938b8aa0aca2c9c61f4e93038b71db90c/src/core/mods/dsmod_module_abi.h",
+      "sha256": "8e9e2cd3c77d74afa40b995bbc94090327d85ec1136a2bf679fed81c52a9f20c"
+    },
+    "LICENSE.txt": {
+      "repository": "https://github.com/igawa6/eden-duo",
+      "commit": "5410366938b8aa0aca2c9c61f4e93038b71db90c",
+      "source": "LICENSE.txt",
+      "url": "https://raw.githubusercontent.com/igawa6/eden-duo/5410366938b8aa0aca2c9c61f4e93038b71db90c/LICENSE.txt",
+      "sha256": "3972dc9744f6499f0f9b2dbf76696f2ae7ad8af9b23dde66d6af86c9dfb36986"
+    },
+    "dsmod_module_extensions.h": {
+      "repository": "https://github.com/igawa6/eden-duo",
+      "commit": "5410366938b8aa0aca2c9c61f4e93038b71db90c",
+      "source": "src/core/mods/dsmod_module_extensions.h",
+      "url": "https://raw.githubusercontent.com/igawa6/eden-duo/5410366938b8aa0aca2c9c61f4e93038b71db90c/src/core/mods/dsmod_module_extensions.h",
+      "sha256": "ddfcd6e142eb36f36d42edfb78bdd6a428c9132d9a1e773acea46521a64d9f01"
+    }
+  }
+}

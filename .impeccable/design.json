@@ -1,0 +1,54 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-10-07T05:10:05.138941+00:00",
+  "title": "Diablo III Duo visual system",
+  "extensions": {
+    "colorMeta": {
+      "canvas": {
+        "role": "neutral",
+        "displayName": "Canvas"
+      },
+      "panel": {
+        "role": "neutral",
+        "displayName": "Panel"
+      },
+      "selected": {
+        "role": "neutral",
+        "displayName": "Selected surface"
+      },
+      "rule": {
+        "role": "neutral",
+        "displayName": "Rules"
+      },
+      "gold": {
+        "role": "primary",
+        "displayName": "Antique gold"
+      },
+      "text": {
+        "role": "neutral",
+        "displayName": "Text"
+      },
+      "muted": {
+        "role": "neutral",
+        "displayName": "Secondary text"
+      }
+    },
+    "typographyMeta": {
+      "display": {
+        "displayName": "Main headings",
+        "purpose": "Rasterized Cinzel heading assets."
+      },
+      "brand": {
+        "displayName": "Brand",
+        "purpose": "Rasterized Cinzel brand asset."
+      },
+      "body": {
+        "displayName": "Native labels",
+        "purpose": "Duo Sans ASCII bitmap font; native cap height is five times text_scale."
+      }
+    }
+  },
+  "narrative": {
+    "overview": "The owner's four October 7 references establish the warm black, antique gold and serif visual direction. The native layout centers statistics and skills. The owner rejected all character imagery; no portrait or replacement art is used."
+  }
+}

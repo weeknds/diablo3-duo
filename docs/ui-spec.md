@@ -1,47 +1,67 @@
-# Development preview UI
+# Native design preview
 
-This manifest is a static status page for the first Eden Duo engine-load test. It does not display live Diablo III data or provide game controls.
+`0.1.1-dev` is a static, three-page Eden Duo companion. The October 7 redesign
+uses the owner's dark fantasy references: warm black, antique gold and cream
+serif headings, with no character imagery. It has not been installed or tested on
+the Thor. [PRODUCT.md](../PRODUCT.md) records purpose and constraints;
+[DESIGN.md](../DESIGN.md) records the visual system.
 
-## Accepted product direction — 2026-10-06
+## Product direction
 
-The owner selected **build and character details** as the lower display's primary
-purpose: reduce trips into Inventory while playing. The intended live layout
-prioritises equipped skills, selected runes, passives and useful character
-statistics. Critical chance, cooldown reduction, resistances and other selected
-bonuses are investigation priorities, not shipped fields.
+The owner selected **build and character details** to reduce visits to the game's
+menus. Equipped skills, selected runes, passives and useful statistics remain the
+intended live direction. A duplicated health/resource display is not part of this
+layout. Critical chance, resistances and additional bonuses are investigation
+priorities, not shipped integrations.
 
-The owner explicitly rejected a health display because the upper screen already
-shows the health bar. Do not reserve permanent lower-screen space for duplicated
-HUD bars. Health is an internal test value for validating the attribute reader,
-not a planned default feature. Apply the same test of usefulness before adding
-any status readout: it should reduce a menu visit or supply useful missing detail.
+Earlier private research has narrow menu-comparison evidence for level, three
+skill names, attack speed and armor, plus movement at +0%. Those private readers
+are not included here. Only independently verified fields may enter a future
+live package. Equipment changes and other game actions remain a later milestone.
 
-Only independently verified fields will enter the live interface. Private
-research now has narrow menu-comparison evidence for level, three skill names,
-attack speed and armor, plus movement at +0%. Selected rune names, passives and
-broader statistic coverage remain unverified. The final supported subset depends on reliable
-read-only access and comparison with the game's menus. XP, maps and equipment
-interaction are deferred. No equipment-changing controls are planned for the
-first read-only release.
+## Pages and layout
 
-Use legible sentence-case text, consistent alignment and original graphics.
-Keep diagnostics outside the normal interface. Missing data must clear promptly
-and explain its unavailable state without displaying guessed values. Check the
-finished layout and input routing on Thor before treating this direction as a
-validated interface.
+The native manifest uses a 1240 × 1080 logical canvas, 44 px content margins,
+an 84 px brand bar and 100 px bottom-navigation region. Character opens first.
+Every page shows **DESIGN PREVIEW** and **Live game data is not connected**.
 
-## Layout
+| Page | Current presentation |
+| --- | --- |
+| Character | Level beside the heading; attacks per second, cooldown reduction, armor and movement bonus in a full-width 2 × 2 sheet. Statistics are `--`. Six numbered unavailable skills appear below in two columns. View skills opens Combat. |
+| Combat | Two columns of three wide numbered skill/rune rows, followed by an unavailable runes/effects message. |
+| Map | Compact centered unavailable state with a plain explanation that map support is not included. |
 
-The logical canvas is 1240 × 1080 with 72-pixel outer margins. One page places the project name above a prominent **DEVELOPMENT PREVIEW** banner and the message **Live game data is not connected**. A single inset panel lists three planned readouts: health, class resource and equipped skills. Each value is an empty em-dash shape. A final line identifies device validation as the next milestone.
-
-The palette uses off-black (`#11100F`), warm ivory (`#F1E9DC`) and muted crimson (`#AA6F6B`). The design uses the runtime's built-in font, literal text and plain rectangles. It includes no Blizzard artwork, game font, item icons or other external assets. Horizontal rectangles draw the em-dashes so placeholder rendering does not depend on Unicode coverage in the built-in font.
+No portraits, figures or replacement character artwork are used. There are no
+equipment comparison controls or buff timers.
+Cinzel heading images and the Duo Sans ASCII bitmap font provide typography;
+original code-drawn pictograms identify pages. Character uses a document glyph;
+skill rows use numbers. Bottom icon/label groups are centered using font metrics. OFL licenses and notices
+travel with the package. See [asset provenance](../design/ASSETS.md).
 
 ## Behavior
 
-The manifest declares runtime 18 and explicitly sets `nav` to `false`. All widgets are static `label` or `rect` widgets. There are no actions, taps, binds, points, derived values, native modules, game-memory reads, writes or button injection. The readouts remain empty for every game state and executable build.
+The manifest declares runtime 18, `requires_module: false` and `nav: false`.
+Its only actions have `kind: page`; the three tabs and Character's skills link
+select local companion pages. Bottom tap regions are 413, 413 and 414 px wide
+by 98 px high; the View skills link is 228 × 88 px. These are manifest dimensions,
+not verified device touch behavior. Controller navigation is disabled in the
+manifest; preservation of normal gameplay input still needs device testing.
 
-The package name includes “Development Preview”. The planned readouts are design intent and do not claim that those integrations work. The first engine-load test should check whether the page appears, whether the text is legible and whether normal gameplay input remains unaffected.
+All content uses static labels, rectangles and packaged images. There are no
+memory reads, writes, derived game values, game-button injection or live binds.
+Unavailable values remain unavailable in every game state and executable build.
 
-## Validation limits
+## Desktop previews and evidence
 
-The manifest was checked against the pinned companion `docs/PACKAGE_FORMAT.md` and the declarative shape of upstream examples. Local structural checks verify identity, runtime, canvas, static widget types, documented fields and numeric bounds. Separately, installation and text placement were observed on an AYN Thor with Eden Duo 1.1.0 on 2026-10-06; see the [original lower-screen capture](images/development-preview-thor.png). Controller behavior during gameplay with this package remains unverified. The original preview's next-milestone caption is retained in the captured artifact; current work is recorded in [next-step.md](next-step.md).
+`python3 tools/render_preview.py` draws the actual manifest with its packaged
+font atlas and images. The renderer approximates native drawing on the desktop;
+its output is not a device capture. `--sample` substitutes illustrative labels
+only while rendering PNGs, with a visible sample-data message. `--stress` checks
+long illustrative names and values offline. Neither mode changes the installable
+manifest or establishes game accuracy or coverage.
+
+The earlier single-page `0.1.0-dev` package was installed and rendered on the
+Thor on 2026-10-06; its [original capture](images/development-preview-thor.png)
+remains historical evidence for that version only. Fresh installation, font and
+image rendering, tab hit testing, gameplay input and performance checks are
+pending for this redesign. See [next-step.md](next-step.md).

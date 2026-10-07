@@ -1,120 +1,28 @@
-# Continue live integration
+# Live candidate checkpoint — 2026-10-07
 
-## Current verified state — 2026-10-06
+`0.1.2-rc.1` combines the portrait-free native design with the recovered read-only reader. It has two pages, **Character** and **Skills**, for level, attacks per second, cooldown reduction, armor, movement bonus and six equipped skill names. Actual rune names, passives, maps, buffs and item comparison are outside this candidate. No health/resource HUD or character imagery is included.
 
-- Production package remains `0.1.0-dev`, static UI only, runtime 18; no supported
-  builds or live reader. All 37 synthetic tooling tests pass; review fixes complete.
-- Owner installed the game update. Eden Duo Info and enabled Add-ons show
-  Diablo III `2.7.7.92380`, title `01001B300B9BE000`, DLC 100–102 enabled. The game's
-  own title screen also shows `2.7.7.92380`.
-- AYN Thor/Android 13/API 33/arm64 and Eden Duo 1.1.0 (versionCode 33940730) observed
-  through authorized ADB. No other Eden installation was modified.
-- Effective updated ExeFS was captured through Eden's built-in `dump_exefs` route
-  and copied privately; `main` SHA-256 matched the device. Full NSO build ID:
-  `2607A74F5DF7754CC0357B5DF7E496931355D8CA000000000000000000000000`.
-  Runtime data key: `2607A74F5DF7754C`. This identifies a build, not a supported reader.
-- Original settings and account database are backed up privately. Account backup
-  hash matched the device. No existing Diablo III save was found. A new `DuoTest`
-  profile was created and selected (index 1); the original account remains.
-- The owner confirmed that a fresh non-seasonal Barbarian reached gameplay, and
-  a device capture recorded that session. The test save is backed up privately.
-- Static `0.1.0-dev` was installed through Add-ons and rendered correctly on the
-  lower screen at the game title screen. The
-  [original lower-screen capture](images/development-preview-thor.png) shows the
-  development message and unavailable live data. Gameplay input routing with
-  that static package active has not been verified.
-- The temporary `dump_exefs` setting is restored to `false`; the exact two-line
-  restoration and resulting configuration hash were verified. An ADB copy
-  initially left this file shell-owned; Eden recreated it from cached settings
-  to restore app ownership. Parsed settings were verified afterward. Avoid
-  replacing app-owned configuration files with `adb push`.
-- NDK r28c is installed and verified in the project-private toolchain directory.
-  A separate private diagnostic module passed review and sanitizer tests, loaded
-  on the Thor, and completed one bounded four-byte read. This confirms the
-  host API only. A subsequent private level probe displayed candidate level 1
-  matching the Barbarian's Inventory menu through two fresh game launches.
-  It showed unavailable at startup and after quitting to the main menu.
-  A physical-control play session changed the Barbarian from level 1 to 2;
-  Inventory and the probe both showed 2. A fresh non-seasonal Wizard matched
-  at level 1. With the private probe active, a tap and swipe directed to the
-  lower display left the game's Inventory state unchanged. The first level
-  milestone is observed; further fields, full lifecycle/input checks and
-  performance measurement remain pending.
+The root builder and `project.json` still describe static `0.1.1-dev`. The candidate builds separately with `python3 native/build.py --ndk /path/to/android-ndk-r28c`, producing `dist/live/01001B300B9BE000.dsmod.zip`. Its **DEVICE TEST** badge remains until final device evidence has been reviewed. No supported build or working-release claim is enabled.
 
-## Private build-details checkpoint
+## Completed
 
-Private `0.0.8-research` combines the reviewed read-only level, selected-skill
-and character-stat readers with an original layout and an OFL-derived font.
-It installed and rendered on the Thor. Wizard level 1 repeated through two fresh
-guest launches; changing to Barbarian level 2 produced the correct distinct
-skills and armor. Startup and normal quit cleared all values. An approximately
-90-second screen-off paused Eden and left the lower display black; Resume
-restored the expected Wizard details. A lower-display tap and swipe left the
-game's Skills selection unchanged. These observations do not establish complete
-lifecycle, controller or performance coverage.
+- Recovered all 45 files of private `0.0.10-research` source/assets with matching recorded hashes. The frozen recovery remains separate; complete historical private evidence was not recovered.
+- Rebuilt the unchanged reader using NDK r28c to SHA-256 `9736a2ed41d0f302f5883e3e508238c9022b216816d70fc63b1633799ab53644`. Passed 76 public Python tests, five native sanitizer suites and 15 native UI/package Python tests. Two NDK builds produced identical candidate ZIPs; [validation](validation.md) records the hash.
+- Reconfirmed Android 13, Eden Duo 1.1.0 (versionCode 33940730) and enabled game update `2.7.7.92380`. Installed through Add-ons, matched package/module identity and exact-build loading, and captured both 1240 × 1080 live pages. Startup and normal quit cleared all value rows.
+- Matched Barbarian level 2, attacks per second 1.20, cooldown reduction 0.00%, armor 31, movement +0% and Bash/no-rune. Values returned after a second fresh enabled launch. Axe removal/restoration matched attacks per second 1.20 → 1.00 → 1.20; axe restored.
+- Switched through ordinary hero selection to Wizard and matched level 1, attacks per second 1.20, armor 16, zero cooldown/movement, Magic Missile/no-rune and five empty/locked slots. Clearing/restoring Magic Missile correctly changed its row to Unassigned and back. Physical controls worked in these menu actions; lower-page navigation left the game's Skills selection unchanged.
+- Completed a 108.47-second screen-off test: both displays were black; Eden remained paused on wake with the lower display black. Resume restored Wizard level 1, attacks per second 1.20, cooldown reduction 0.00%, armor 16, movement +0% and Magic Missile.
+- Short stationary presentation windows measured 51.22–52.15 events/second disabled and 50.59–51.57 enabled, with similar approximately 33.38 ms p95 intervals. No obvious large cadence regression appeared; unique guest FPS, zero overhead, CPU/battery impact and sustained combat were not established. See [method and limits](validation.md).
 
-The frozen earlier probes established three factual names by comparing the
-Skills menu and independently clearing/reassigning each slot: Magic Missile,
-Bash and Hammer of the Ancients. Only the no-rune state was verified. Attacks
-per second changed 1.20 → 1.00 → 1.20 when removing/restoring the Barbarian's
-weapon; armor changed 31 → 22 → 31 with its shield. Both changes matched Character
-Details. Wizard armor 16 and attack speed 1.20 matched too. Movement was checked
-only at +0%; cooldown reduction has no available cached value in these tests.
+Earlier private `0.0.8-research` observations are dated separately in [validation](validation.md). They do not substitute for the remaining current-candidate checks.
 
-Exact artifact hashes, screenshots, review receipts and limits are retained in
-`private/reports/skills-probe-device-20261006.json`,
-`private/reports/character-stats-device-20261006.json` and
-`private/reports/build-details-device-20261006.json`.
-These private artifacts are not a working release. No production support flags
-or package contents have changed.
+## Remaining before a working release
 
-## Immediate continuation
+1. Complete the fresh Hammer of the Ancients comparison and broaden nonzero stat/rune coverage where available. Restrict declared field/class/mode support to observed behavior; actual rune names remain outside this candidate.
+2. Finish loading/travel, death and other unavailable/error states, plus broader physical-input checks. Startup, normal quit, two fresh Barbarian launches, the different Wizard comparison and the 108.47-second suspend/resume are already observed.
+3. Extend the short stationary enabled/disabled presentation checks to representative sustained gameplay. Retain comparable conditions and the procedure/results; presentation cadence alone does not measure CPU cost, battery impact or unique guest FPS.
+4. Review source, dependency notices, package contents and dated device evidence. Only then update compatibility/support metadata and publish a working release. If a required check fails, keep the artifact labeled as a candidate and record the limitation.
 
-1. Check `private/device/session-state.json` for current device ownership and
-   research state before interacting. Preserve owner settings, the test profile
-   and the private save backup. Leave `dump_exefs` disabled.
-2. Review the retained private combined-reader and menu-comparison evidence. Complete
-   gameplay and controller/touch coverage with the final live candidate; the
-   static preview's title-screen rendering is separate evidence.
-3. Follow the accepted [build and character details direction](ui-spec.md).
-   Prioritise equipped skills, selected runes, passives and useful menu-only
-   statistics. Health is an internal attribute-reader test and must not become
-   a default readout merely because it is easy to validate. Keep the private
-   research outside production until each field's evidence has been reviewed.
-4. Expand skill names and selected runes using a bounded, reviewed lookup rather
-   than assuming the three observed names cover other builds. Private research
-   is investigating the game's existing name tables and exact native handling
-   of missing cached stats. Every new path needs synthetic failure coverage,
-   independent review and fresh device comparisons. Then complete death, travel
-   and further gameplay/lifecycle checks with the final candidate.
-5. Measure performance and companion overhead on the Thor before claiming live
-   support. Update compatibility and production flags only after the required
-   evidence has been reviewed.
+Use only read-only data access. Preserve the normal profile/settings, leave `dump_exefs` disabled, and do not replace app-owned configuration files with `adb push`. The reviewed Eden save import/export UI targets profile 0 even when another profile is selected, so do not use it to import the test save. See the [device protocol](device-validation.md).
 
-No game-memory writes, sentinel writes, inventory actions, emulator fork, root,
-firmware changes or paid services are part of the current work.
-
-## Environment and safety findings
-
-Native modules cannot load on macOS. Android release builds omit developer
-memory scanners and profiling, but retain the native bounded-read module API.
-A small module can be compiled on the Mac with the standalone Android NDK;
-no Java/Gradle or emulator rebuild is required for that path. NDK r28c is installed
-under ignored `private/toolchains/`; its download was verified against Google's
-repository manifest. No global toolchain setting was changed.
-
-Save import/export in reviewed upstream code targets profile 0 even after
-selecting another profile. Do not use that UI to import a test save. The actual
-selected profile and effective NAND/save roots must be verified independently.
-See [upstream research](upstream-research.md) and [device protocol](device-validation.md).
-
-## Publication checkpoint
-
-English documentation, CI, the original lower-screen screenshot and the exact
-`public-files.txt` source allowlist have passed prepublication review. The owner
-has authorized publication of truthful development source on `main`, now available
-at [weeknds/diablo3-duo](https://github.com/weeknds/diablo3-duo). Tooling CI passed
-on Python 3.10/3.14 after correcting a test-only failure-injection portability issue.
-Never stage `private/` or `.serena/`. A working release remains gated on useful
-verified live values, lifecycle/input testing, measured overhead and matching
-compatibility records.
+No game-memory writes, inventory actions, emulator fork, root, firmware changes or paid services are part of this milestone. Private game material, recovery records and game-display captures remain outside public source and archives. The published lower-display captures contain only the companion UI.

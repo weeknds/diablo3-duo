@@ -1,6 +1,6 @@
 {
   "name": "Diablo III Duo",
-  "version": "0.1.0-dev",
+  "version": "0.1.1-dev",
   "target_title_id": "01001B300B9BE000",
   "minimum_runtime": 18,
   "stage": "development-ui-only",

@@ -8,15 +8,26 @@ import importlib.util
 import json
 import re
 import sys
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 
 ROOT = Path(__file__).resolve().parents[1]
 TOP_KEYS = {"format", "name", "title_id", "min_runtime", "canvas_w", "canvas_h",
-            "background", "nav", "requires_module", "pages"}
+            "background", "nav", "requires_module", "pages", "actions", "font", "font_atlas"}
 PAGE_KEYS = {"id", "title", "widgets"}
-WIDGET_KEYS = {"type", "rect", "text", "text_scale", "color", "bg", "frame",
-               "text_center_h", "fit_text", "text_min_scale", "wrap_width", "max_lines"}
-COLOR_KEYS = {"color", "bg", "background"}
+COMMON_WIDGET_KEYS = {"type", "rect", "id", "on_tap"}
+WIDGET_KEYS = {
+    "label": COMMON_WIDGET_KEYS | {"text", "text_scale", "color", "bg", "text_center_h",
+                                   "fit_text", "text_min_scale", "wrap_width", "max_lines"},
+    "rect": COMMON_WIDGET_KEYS | {"color", "bg", "frame"},
+    "image": COMMON_WIDGET_KEYS | {"src", "tint"},
+}
+COLOR_KEYS = {"color", "bg", "background", "tint"}
+ASSET_SUFFIXES = {".png", ".mfnt", ".rec", ".txt"}
+# These directory names are omitted by the pinned upstream packager (or reserved
+# for native modules). An approved asset must actually survive packaging.
+EXCLUDED_ASSET_DIRS = {".git", "__pycache__", "build", "cache", "caches", "debug",
+                       "dump", "dumps", "extract", "extracted", "tmp", "temp", "modules"}
+ID_RE = re.compile(r"[A-Za-z0-9_-]{1,64}")
 
 
 class DevelopmentError(ValueError):
@@ -44,21 +55,75 @@ def known_keys(value: dict, allowed: set[str], where: str) -> None:
             raise DevelopmentError(f"{where}.{key} must be #AARRGGBB or an unsigned 32-bit color")
 
 
+def asset_path(value: str) -> PurePosixPath:
+    if (not isinstance(value, str) or "\\" in value or ":" in value or "\0" in value
+            or any(part in {"", ".", ".."} for part in value.split("/"))):
+        raise DevelopmentError(f"Invalid asset path: {value!r}")
+    path = PurePosixPath(value)
+    if (path.is_absolute() or len(path.parts) < 2 or path.parts[0] != "dualscreen"
+            or path.suffix.lower() not in ASSET_SUFFIXES
+            or set(part.lower() for part in path.parts[:-1]) & EXCLUDED_ASSET_DIRS):
+        raise DevelopmentError(f"Unsupported asset path or type: {value!r}")
+    return path
+
+
+def validate_assets(root: Path) -> set[str]:
+    package = root / "package"
+    inventory_path = root / "package-assets.json"
+    if package.is_symlink() or inventory_path.is_symlink():
+        raise DevelopmentError("Package source cannot contain symbolic links")
+    inventory = read_object(inventory_path)
+    for relative, digest in inventory.items():
+        asset_path(relative)
+        if not isinstance(digest, str) or not re.fullmatch(r"[0-9a-f]{64}", digest):
+            raise DevelopmentError(f"Invalid asset SHA256: {relative}")
+    found = set()
+    for path in package.rglob("*"):
+        if path.is_symlink():
+            raise DevelopmentError("Package source cannot contain symbolic links")
+        if path.is_dir():
+            continue
+        if not path.is_file():
+            raise DevelopmentError("Package source must contain only regular files")
+        relative = path.relative_to(package).as_posix()
+        if relative == "dualscreen/manifest.json":
+            continue
+        if relative not in inventory:
+            raise DevelopmentError(f"Package contains an unlisted asset: {relative}")
+        if path.suffix.lower() == ".txt" and path.stat().st_size > 128 * 1024:
+            raise DevelopmentError(f"Asset license/notice text exceeds 128 KiB: {relative}")
+        if hashlib.sha256(path.read_bytes()).hexdigest() != inventory[relative]:
+            raise DevelopmentError(f"Asset SHA256 hash mismatch: {relative}")
+        found.add(relative)
+    missing = set(inventory) - found
+    if missing:
+        raise DevelopmentError(f"Listed assets are missing: {sorted(missing)}")
+    return found
+
+
+def validate_file_reference(value: object, assets: set[str], suffixes: set[str]) -> None:
+    if not isinstance(value, str) or not value.startswith("file:"):
+        raise DevelopmentError("Static assets must use a local file: reference")
+    relative = "dualscreen/" + value[5:]
+    path = asset_path(relative)
+    if relative not in assets or path.suffix.lower() not in suffixes:
+        raise DevelopmentError(f"Asset reference is missing or has an unsupported type: {value}")
+
+
+def valid_id(value: object) -> bool:
+    return isinstance(value, str) and ID_RE.fullmatch(value) is not None
+
+
 def validate_development(root: Path = ROOT) -> dict:
-    """Narrow policy for this first static build, not a general Eden validator."""
+    """Static design-preview policy, not a general Eden manifest validator."""
     project = read_object(root / "project.json")
     if (project.get("stage") != "development-ui-only"
             or project.get("supported_builds") != []
             or project.get("verified_on_thor") is not False
             or project.get("live_data_available") is not False):
         raise DevelopmentError("This builder only ships the unverified development UI; live support needs a new validation stage.")
-    package = root / "package"
-    for path in package.rglob("*"):
-        if path.is_symlink():
-            raise DevelopmentError("Package source cannot contain symbolic links")
-        if path.is_file() and path.relative_to(package).as_posix() != "dualscreen/manifest.json":
-            raise DevelopmentError("Development package must contain only dualscreen/manifest.json")
-    manifest = read_object(package / "dualscreen/manifest.json")
+    assets = validate_assets(root)
+    manifest = read_object(root / "package/dualscreen/manifest.json")
     known_keys(manifest, TOP_KEYS, "manifest")
     if manifest.get("format") != 1:
         raise DevelopmentError("Manifest format must be 1")
@@ -72,49 +137,78 @@ def validate_development(root: Path = ROOT) -> dict:
         raise DevelopmentError("Runtime must match; navigation and module requirement must be explicitly disabled")
     if (manifest.get("canvas_w"), manifest.get("canvas_h")) != (1240, 1080):
         raise DevelopmentError("Development canvas must be 1240 x 1080")
+    for key, suffixes in (("font", {".mfnt", ".rec"}), ("font_atlas", {".png"})):
+        if key in manifest:
+            validate_file_reference(manifest[key], assets, suffixes)
     pages = manifest.get("pages")
-    if not isinstance(pages, list) or len(pages) != 1:
-        raise DevelopmentError("This first development build must have exactly one status page")
-    labels = []
-    page = pages[0]
-    if not isinstance(page, dict):
-        raise DevelopmentError("Page must be an object")
-    known_keys(page, PAGE_KEYS, "page")
-    if not isinstance(page.get("id"), str) or not page["id"] or page["id"].startswith("@"):
-        raise DevelopmentError("Page needs a non-reserved ID")
-    widgets = page.get("widgets")
-    if not isinstance(widgets, list) or not widgets:
-        raise DevelopmentError("Status page has no widgets")
-    for number, widget in enumerate(widgets):
-        if not isinstance(widget, dict):
-            raise DevelopmentError("Widget must be an object")
-        known_keys(widget, WIDGET_KEYS, f"widget {number}")
-        if widget.get("type") not in {"label", "rect"}:
-            raise DevelopmentError("Development widgets must be static labels or rectangles")
-        rect = widget.get("rect")
-        if not isinstance(rect, list) or len(rect) != 4 or any(type(v) is not int for v in rect):
-            raise DevelopmentError("Widget rectangles must have four integer coordinates")
-        x, y, width, height = rect
-        if (x < 0 or y < 0 or x >= 1240 or y >= 1080 or width < 0 or height < 0
-                or x + width > 1240 or y + height > 1080
-                or (widget["type"] == "rect" and (width == 0 or height == 0))):
-            raise DevelopmentError(f"Widget {number} is outside the canvas")
-        if widget["type"] == "label":
-            if not isinstance(widget.get("text"), str):
-                raise DevelopmentError("Every label needs literal text")
-            scale = widget.get("text_scale", 1)
-            if type(scale) is not int or not 1 <= scale <= 16:
-                raise DevelopmentError("Text scale must be an integer between 1 and 16")
-            # Eden accepts [x,y,0,0] for labels: text layout determines their size.
-            # Check the declared wrapping/centering limits without pretending to
-            # reproduce the emulator's actual font renderer.
-            for field, available in (("wrap_width", 1240 - x), ("text_center_h", 1080 - y)):
-                if field in widget and (type(widget[field]) is not int or not 0 <= widget[field] <= available):
-                    raise DevelopmentError(f"Widget {number} has an invalid {field}")
-            labels.append(widget["text"])
-    for required in ("DEVELOPMENT PREVIEW", "Live game data is not connected"):
-        if required not in labels:
-            raise DevelopmentError(f"Visible status is required: {required}")
+    if not isinstance(pages, list) or not 1 <= len(pages) <= 4:
+        raise DevelopmentError("Design preview must have between one and four pages")
+    page_ids = set()
+    for page in pages:
+        if not isinstance(page, dict):
+            raise DevelopmentError("Page must be an object")
+        known_keys(page, PAGE_KEYS, "page")
+        if not valid_id(page.get("id")):
+            raise DevelopmentError("Page needs a non-reserved alphanumeric ID")
+        if page["id"] in page_ids:
+            raise DevelopmentError("Page IDs must be unique")
+        page_ids.add(page["id"])
+    actions = manifest.get("actions", {})
+    if not isinstance(actions, dict):
+        raise DevelopmentError("Page actions must be an object")
+    for name, action in actions.items():
+        if not valid_id(name) or not isinstance(action, dict):
+            raise DevelopmentError("Page actions need valid names and objects")
+        known_keys(action, {"kind", "page"}, f"page action {name}")
+        if action.get("kind") != "page" or not isinstance(action.get("page"), str) or action["page"] not in page_ids:
+            raise DevelopmentError(f"Only page actions to existing page targets are permitted: {name}")
+    for page in pages:
+        labels = []
+        widget_ids = set()
+        widgets = page.get("widgets")
+        if not isinstance(widgets, list) or not widgets:
+            raise DevelopmentError("Status page has no widgets")
+        for number, widget in enumerate(widgets):
+            if not isinstance(widget, dict):
+                raise DevelopmentError("Widget must be an object")
+            kind = widget.get("type")
+            if not isinstance(kind, str) or kind not in WIDGET_KEYS:
+                raise DevelopmentError("Development widgets must be static labels, rectangles or images")
+            known_keys(widget, WIDGET_KEYS[kind], f"widget {number}")
+            if "id" in widget:
+                if not valid_id(widget["id"]) or widget["id"] in widget_ids:
+                    raise DevelopmentError("Widget IDs must be valid and unique within their page")
+                widget_ids.add(widget["id"])
+            if "on_tap" in widget and (not isinstance(widget["on_tap"], str) or widget["on_tap"] not in actions):
+                raise DevelopmentError("Widget on_tap must name a declared page action")
+            rect = widget.get("rect")
+            if not isinstance(rect, list) or len(rect) != 4 or any(type(v) is not int for v in rect):
+                raise DevelopmentError("Widget rectangles must have four integer coordinates")
+            x, y, width, height = rect
+            if (x < 0 or y < 0 or x >= 1240 or y >= 1080 or width < 0 or height < 0
+                    or x + width > 1240 or y + height > 1080
+                    or (kind in {"rect", "image"} and (width == 0 or height == 0))):
+                raise DevelopmentError(f"Widget {number} is outside the canvas")
+            if kind == "image":
+                validate_file_reference(widget.get("src"), assets, {".png"})
+            if kind == "label":
+                if not isinstance(widget.get("text"), str):
+                    raise DevelopmentError("Every label needs literal text")
+                scale = widget.get("text_scale", 1)
+                if type(scale) is not int or not 1 <= scale <= 16:
+                    raise DevelopmentError("Text scale must be an integer between 1 and 16")
+                # Labels may use zero-size rectangles; the native font renderer
+                # determines their measured bounds. These checks do not emulate it.
+                for field, available in (("wrap_width", 1240 - x), ("text_center_h", 1080 - y)):
+                    if field in widget and (type(widget[field]) is not int or not 0 <= widget[field] <= available):
+                        raise DevelopmentError(f"Widget {number} has an invalid {field}")
+                color = widget.get("color", 0xFFE6ECF2)
+                color = int(color[1:], 16) if isinstance(color, str) else color
+                if color >> 24:
+                    labels.append(widget["text"])
+        for required in ("DESIGN PREVIEW", "Live game data is not connected"):
+            if required not in labels:
+                raise DevelopmentError(f"Visible status is required on page {page['id']}: {required}")
     return project
 
 
