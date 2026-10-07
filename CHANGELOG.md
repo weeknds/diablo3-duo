@@ -12,15 +12,19 @@
 Installed through Add-ons on the Thor; package/module identity, exact-build
 loading, title-screen rendering with unavailable data and both page actions
 were observed. Barbarian level 2, attacks per second 1.20, cooldown reduction
-0.00%, armor 31, movement +0% and Bash/no-rune matched the game menus. Axe
+0.00%, armor 31, movement +0%, Bash and Hammer of the Ancients/no-rune matched
+the game menus. Hammer clear/restore correctly updated slot 2. Axe
 removal/restoration matched attacks per second 1.20 → 1.00 → 1.20. A different
 Wizard matched level 1, attacks per second 1.20, armor 16, zero cooldown/movement
 and Magic Missile/no-rune; skill clear/restore updated the row correctly. Physical
 controls and lower-page navigation worked in the observed menu states. Normal
 quit cleared all value rows; Barbarian values returned after a second fresh
-enabled launch. Hammer of the Ancients, nonzero stats, broader input coverage
+enabled launch. Nonzero stats, broader input coverage
 and remaining lifecycle checks are pending. A 108.47-second screen-off test left
-Eden paused on wake; Resume restored Wizard values and Magic Missile. Short
+Eden paused on wake; Resume restored Wizard values and Magic Missile. A New
+Tristram/Slaughtered Calf Inn round trip retained correct Barbarian values at the
+destinations; the brief loading interval was not captured. Death and broader
+travel/loading remain unverified. Short
 stationary enabled/disabled presentation checks showed no obvious large cadence
 regression; zero overhead and sustained-combat performance are not established. This is not a verified working release. Earlier private prototype
 observations do not establish compatibility for this candidate.

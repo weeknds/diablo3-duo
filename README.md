@@ -4,7 +4,7 @@ A read-only lower-screen companion for **Diablo III: Eternal Collection (Switch)
 
 **`0.1.2-rc.1` is a live candidate undergoing device validation. It is not a verified working release.** The separate `0.1.1-dev` static design preview remains available to build. No supported game build has been declared.
 
-The prerelease is prepared for [v0.1.2-rc.1](https://github.com/weeknds/diablo3-duo/releases/tag/v0.1.2-rc.1); publication is pending. Build locally with the command below until its package and checksum are available there.
+Download the candidate package and checksum from [v0.1.2-rc.1](https://github.com/weeknds/diablo3-duo/releases/tag/v0.1.2-rc.1), or build locally with the command below.
 
 The live candidate has two pages: **Character** and **Skills**. It connects character level, attacks per second, cooldown reduction, armor, movement bonus and six equipped skill names to an exact-build, bounded native reader. Missing or rejected data stays unavailable. Rune names, passives, maps, buff timers, item comparison and equipment actions are not included; only the no-rune state can be identified.
 
@@ -12,7 +12,7 @@ The interface uses warm black, antique gold, clear statistics and numbered skill
 
 ![Actual AYN Thor lower display showing the live candidate with the level-2 Barbarian](docs/images/live-candidate-character-thor.png)
 
-Actual 1240 × 1080 Thor capture, 2026-10-07. Level 2, attacks per second 1.20, cooldown reduction 0.00% and armor 31 matched the game's menus in this session. Bash/no-rune and movement +0% also matched the game menus. Hammer of the Ancients still needs a fresh menu comparison. See the [Skills page](docs/images/live-candidate-skills-thor.png) and [unavailable startup state](docs/images/live-candidate-startup-thor.png). The **DEVICE TEST** badge marks the validation candidate.
+Actual 1240 × 1080 Thor capture, 2026-10-07. Level 2, attacks per second 1.20, cooldown reduction 0.00% and armor 31 matched the game's menus in this session. Bash, Hammer of the Ancients, their no-rune states and movement +0% also matched the game menus. See the [Skills page](docs/images/live-candidate-skills-thor.png) and [unavailable startup state](docs/images/live-candidate-startup-thor.png). The **DEVICE TEST** badge marks the validation candidate.
 
 ## Choose a build
 
@@ -33,13 +33,13 @@ Earlier private `0.0.8-research` testing matched character level, three equipped
 
 The candidate was installed through Eden Add-ons on 2026-10-07. Package/version and native-module hash matched on device; the module loaded for the exact recorded game build. The actual 1240 × 1080 lower display rendered correctly at the title screen, with unavailable values and a clear startup status. Logs recorded both Character and Skills page actions.
 
-Current-candidate comparisons matched Barbarian level 2, attacks per second 1.20, cooldown reduction 0.00%, armor 31 and movement +0%, plus Bash with no rune. Values returned after a second fresh enabled launch. Removing/restoring the axe changed attacks per second 1.20 → 1.00 → 1.20, matching Character Details in all three states; the axe was restored.
+Current-candidate comparisons matched Barbarian level 2, attacks per second 1.20, cooldown reduction 0.00%, armor 31 and movement +0%, plus Bash and Hammer of the Ancients with no runes. Clearing/restoring Hammer changed slot 2 to Unassigned and back correctly. Values returned after a second fresh enabled launch. Removing/restoring the axe changed attacks per second 1.20 → 1.00 → 1.20, matching Character Details in all three states; the axe was restored.
 
-Switching through ordinary hero selection to Wizard matched level 1, attacks per second 1.20, armor 16, cooldown reduction 0.00% and movement +0%. Magic Missile/no-rune and five empty/locked slots matched Skills. Clearing and restoring Magic Missile changed its row to Unassigned and back correctly. Normal quit cleared every value row. Both companion pages and physical +/Y controls worked; lower-screen navigation while Skills was open left the game's selection unchanged. After 108.47 seconds with the screens off, Eden remained paused on wake; using Resume restored the Wizard's values and Magic Missile.
+Switching through ordinary hero selection to Wizard matched level 1, attacks per second 1.20, armor 16, cooldown reduction 0.00% and movement +0%. Magic Missile/no-rune and five empty/locked slots matched Skills. Clearing and restoring Magic Missile changed its row to Unassigned and back correctly. Normal quit cleared every value row. Both companion pages and physical +/Y controls worked; lower-screen navigation while Skills was open left the game's selection unchanged. After 108.47 seconds with the screens off, Eden remained paused on wake; using Resume restored the Wizard's values and Magic Missile. Ordinary door travel from New Tristram into The Slaughtered Calf Inn and back preserved the Barbarian's correct values on both companion pages.
 
 Two short stationary windows per condition showed 51.22–52.15 presentation events/second with the companion disabled and 50.59–51.57 enabled, with similar approximately 33.38 ms 95th-percentile intervals. This showed no obvious large cadence regression in those windows; it does not establish zero overhead, unique game FPS or sustained-combat performance. The [validation record](docs/validation.md) gives the method and limits.
 
-These are narrow observations from the current candidate. Hammer of the Ancients comparison, nonzero cooldown/movement coverage, remaining lifecycle checks, full input coverage and sustained gameplay measurements remain pending. Historical observations do not validate those remaining checks. See [the current checkpoint](docs/next-step.md), [compatibility](docs/compatibility.md) and [validation protocol](docs/device-validation.md).
+These are narrow observations from the current candidate. Nonzero cooldown/movement coverage, death, broader travel/loading and other lifecycle states, full input coverage and sustained gameplay measurements remain pending. The brief loading interval on the tested town/inn route was not captured. Historical observations do not validate those remaining checks. See [the current checkpoint](docs/next-step.md), [compatibility](docs/compatibility.md) and [validation protocol](docs/device-validation.md).
 
 ## Test and preview locally
 
@@ -64,7 +64,7 @@ The first reads an already decrypted NSO header; the second reads bounded PFS0 d
 
 ## Contribute and release
 
-Read [CONTRIBUTING.md](CONTRIBUTING.md), [CHANGELOG.md](CHANGELOG.md) and [release requirements](docs/releasing.md). CI is configured to build the static package and run synthetic tooling/native host checks. A working live release requires documented device values, lifecycle/input behavior, measured overhead and a matching compatibility record. Inventory interaction is a later milestone.
+Read [CONTRIBUTING.md](CONTRIBUTING.md), [CHANGELOG.md](CHANGELOG.md) and [release requirements](docs/releasing.md). Source CI passed all jobs at `f93f3e7` ([run](https://github.com/weeknds/diablo3-duo/actions/runs/37584002649)), covering synthetic tooling/native host checks and static packaging. A working live release requires documented device values, lifecycle/input behavior, measured overhead and a matching compatibility record. Inventory interaction is a later milestone.
 
 ## Upstream and licence
 
